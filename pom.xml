@@ -2,19 +2,19 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.matsim</groupId>
-	<artifactId>matsim-example-project</artifactId>
+	<groupId>com.github.matsim-vsp</groupId>
+	<artifactId>drt-speed-up</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<name>MATSim example project</name>
-	<description>MATSim example project</description>
+	<name>DRT Speed-up</name>
+	<description>DRT Speed-up</description>
 
 	<properties>
 	  <!-- release> -->
-		<matsim.version>11.0</matsim.version>
+		<!-- <matsim.version>11.0</matsim.version> -->
 
 	  <!--weekly "release":-->
-	  <!--<matsim.version>0.11.0-2019w01-SNAPSHOT</matsim.version>-->
+	  <matsim.version>12.0-2019w41-SNAPSHOT</matsim.version>
 	</properties>
 
 	<repositories>
@@ -73,41 +73,30 @@
 		<!--some contribs:-->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
-			<artifactId>minibus</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>otfvis</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>roadpricing</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>taxi</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
 			<artifactId>av</artifactId>
 			<version>${matsim.version}</version>
 		</dependency>
+		
 		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>freight</artifactId>
-			<version>${matsim.version}</version>
+        	<groupId>org.matsim.contrib</groupId>
+        	<artifactId>dvrp</artifactId>
+        	<version>${matsim.version}</version>
+        	<scope>compile</scope>
+      	</dependency>
+      	
+      	<dependency>
+        	<groupId>org.matsim.contrib</groupId>
+ 		    <artifactId>drt</artifactId>
+        	<version>${matsim.version}</version>
+       		<scope>compile</scope>
+     	</dependency>
+      	
+      	<dependency>
+	    	<groupId>com.github.matsim-vsp</groupId>
+	    	<artifactId>matsim-berlin</artifactId>
+			<version>5.5-SNAPSHOT</version>
 		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>bicycle</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<!--Dependencies from where stated above to here are added as a service; they can be removed if you don't need them-->
-
+		
 	</dependencies>
 
 	<build>
