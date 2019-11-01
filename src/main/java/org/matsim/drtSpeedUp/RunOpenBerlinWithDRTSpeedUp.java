@@ -42,8 +42,13 @@ public class RunOpenBerlinWithDRTSpeedUp {
 		}
 		
 		Config config = RunDrtOpenBerlinScenario.prepareConfig( args ) ;
+		DrtSpeedUpModule.adjustConfig(config, "drt");
+		
 		Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario( config ) ;
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler( scenario ) ;
+		
+		controler.addOverridingModule(new DrtSpeedUpModule());
+		
 		controler.run() ;
 	}
 
