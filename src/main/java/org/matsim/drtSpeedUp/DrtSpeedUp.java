@@ -158,8 +158,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			// TODO: Make the following also work for intermodal trips: DRT + PT
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Plan selectedPlan = person.getSelectedPlan();
-				System.out.println("before: " + selectedPlan.toString());
-
 				for (PlanElement pE : selectedPlan.getPlanElements()) {		
 					if (pE instanceof Leg) {
 						Leg leg = (Leg) pE;
@@ -168,9 +166,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
 						}
 					}
-				}
-				
-				System.out.println("after: " + selectedPlan.toString());
+				}				
 			}
 		}
 	}
