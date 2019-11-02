@@ -71,10 +71,12 @@ import com.google.inject.Inject;
 final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEventHandler, StartupListener, BeforeMobsimListener, AfterMobsimListener, IterationStartsListener, IterationEndsListener {
 	private static final Logger log = Logger.getLogger(DrtSpeedUp.class);
 
+	private final String mode;
+	private final ModeRoutingParams currentModeParams;
+
 	private final double fractionOfIterationsSwitchOff = 0.7;
 	private final double fractionOfIterationSwitchOn = 0.0;
 	private final int intervalDetailedIteration = 10;
-	private final String mode = "drt";
 	private final double beelineDistanceFactorForFareCalculation = 1.3;
 	
 	private ShpUtils shpUtils;
@@ -91,6 +93,16 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	
 	@Inject
 	private EventsManager events;
+
+	public DrtSpeedUp(String mode) {
+		
+		this.mode = mode;
+		
+		// set some default params to start with
+		this.currentModeParams = new ModeRoutingParams(this.mode + "_teleportation");
+		this.currentModeParams.setBeelineDistanceFactor(1.0);
+		this.currentModeParams.setTeleportedModeSpeed(2.7777778);
+	}
 
 	@Override
     public void reset(int iteration) {
@@ -113,9 +125,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			log.info("Setting teleported mode speed for " + this.mode + "_teleportation to the average beeline speed: " + averageBeelineSpeed);
 			
 			// and then set the teleportation parameters accordingly
-			ModeRoutingParams modeParams = this.scenario.getConfig().plansCalcRoute().getModeRoutingParams().get(this.mode + "_teleportation");			
-			modeParams.setBeelineDistanceFactor(1.0);
-			modeParams.setTeleportedModeSpeed(averageBeelineSpeed);
+			this.currentModeParams.setBeelineDistanceFactor(1.0);
+			this.currentModeParams.setTeleportedModeSpeed(averageBeelineSpeed);
 		}
 	}
 
@@ -273,6 +284,10 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			this.person2drtDepTime.put(event.getPersonId(), event.getTime());
 			this.person2drtDepLinkId.put(event.getPersonId(), event.getLinkId());
 		}
+	}
+
+	ModeRoutingParams getModeParams() {
+		return currentModeParams;
 	}
 	
 }

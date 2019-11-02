@@ -21,7 +21,6 @@ package org.matsim.drtSpeedUp;
 
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.controler.AbstractModule;
 
 /**
@@ -29,29 +28,30 @@ import org.matsim.core.controler.AbstractModule;
 */
 
 public class DrtSpeedUpModule extends AbstractModule {
+	
+	private final String mode = "drt";
 
 	@Override
 	public void install() {
-		this.bind(DrtSpeedUp.class).asEagerSingleton();
-		this.addControlerListenerBinding().to(DrtSpeedUp.class);
-		this.addEventHandlerBinding().to(DrtSpeedUp.class);
+
+		DrtSpeedUp speedUp = new DrtSpeedUp(mode);
+		
+		this.addControlerListenerBinding().toInstance(speedUp);
+		this.addEventHandlerBinding().toInstance(speedUp);
+		
+        addRoutingModuleBinding(mode + "_teleportation").toProvider(new FlexibleBeelineTeleportationRouting(mode + "_teleportation", speedUp));
 	}
 
-	public static void adjustConfig(Config config, String mode) {
-		ModeRoutingParams modeParams = new ModeRoutingParams(mode + "_teleportation");
-		modeParams.setBeelineDistanceFactor(1.0);
-		modeParams.setTeleportedModeSpeed(2.7777778);
-		config.plansCalcRoute().addModeRoutingParams(modeParams);
-	
-		ModeParams currentScoringParams = config.planCalcScore().getModes().get(mode);
-		ModeParams scoringParamsTeleportedMode = new ModeParams(mode + "_teleportation");
-		scoringParamsTeleportedMode.setConstant(currentScoringParams.getConstant());
-		scoringParamsTeleportedMode.setDailyMonetaryConstant(currentScoringParams.getDailyMonetaryConstant());
-		scoringParamsTeleportedMode.setDailyUtilityConstant(currentScoringParams.getDailyUtilityConstant());
-		scoringParamsTeleportedMode.setMarginalUtilityOfDistance(currentScoringParams.getMarginalUtilityOfDistance());
-		scoringParamsTeleportedMode.setMarginalUtilityOfTraveling(currentScoringParams.getMarginalUtilityOfTraveling());
-		scoringParamsTeleportedMode.setMonetaryDistanceRate(currentScoringParams.getMonetaryDistanceRate());
-		config.planCalcScore().addModeParams(scoringParamsTeleportedMode);
+	public static void adjustConfig(Config config, String mode) {	
+		ModeParams originalScoringParams = config.planCalcScore().getModes().get(mode);
+		ModeParams scoringParamsFakeMode = new ModeParams(mode + "_teleportation");
+		scoringParamsFakeMode.setConstant(originalScoringParams.getConstant());
+		scoringParamsFakeMode.setDailyMonetaryConstant(originalScoringParams.getDailyMonetaryConstant());
+		scoringParamsFakeMode.setDailyUtilityConstant(originalScoringParams.getDailyUtilityConstant());
+		scoringParamsFakeMode.setMarginalUtilityOfDistance(originalScoringParams.getMarginalUtilityOfDistance());
+		scoringParamsFakeMode.setMarginalUtilityOfTraveling(originalScoringParams.getMarginalUtilityOfTraveling());
+		scoringParamsFakeMode.setMonetaryDistanceRate(originalScoringParams.getMonetaryDistanceRate());
+		config.planCalcScore().addModeParams(scoringParamsFakeMode);
 	}
 
 }
