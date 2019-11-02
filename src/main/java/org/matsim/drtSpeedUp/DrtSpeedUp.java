@@ -113,10 +113,9 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			log.info("Setting teleported mode speed for " + this.mode + "_teleportation to the average beeline speed: " + averageBeelineSpeed);
 			
 			// and then set the teleportation parameters accordingly
-			ModeRoutingParams modeParams = new ModeRoutingParams(this.mode + "_teleportation");
+			ModeRoutingParams modeParams = this.scenario.getConfig().plansCalcRoute().getModeRoutingParams().get(this.mode + "_teleportation");			
 			modeParams.setBeelineDistanceFactor(1.0);
 			modeParams.setTeleportedModeSpeed(averageBeelineSpeed);
-			this.scenario.getConfig().plansCalcRoute().addModeRoutingParams(modeParams);
 		}
 	}
 
