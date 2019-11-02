@@ -43,8 +43,9 @@ import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.routing.DrtRoute;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.events.BeforeMobsimEvent;
@@ -76,6 +77,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	private final String mode = "drt";
 	private final double beelineDistanceFactorForFareCalculation = 1.3;
 	
+	private ShpUtils shpUtils;
+	
 	boolean teleportDrtUsers = false;
 	
 	Map<Id<Person>, Double> person2drtDepTime = new HashMap<>();
@@ -88,7 +91,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	
 	@Inject
 	private EventsManager events;
-	
+
 	@Override
     public void reset(int iteration) {
         dailyFeeCharged.clear();
@@ -142,6 +145,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	public void notifyAfterMobsim(AfterMobsimEvent event) {
 		if (teleportDrtUsers) {
 			// set mode back to original drt mode
+			// TODO: Make the following also work for intermodal trips: DRT + PT
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Plan selectedPlan = person.getSelectedPlan();
 				System.out.println("before: " + selectedPlan.toString());
@@ -165,6 +169,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	public void notifyBeforeMobsim(BeforeMobsimEvent event) {
 		if (teleportDrtUsers) {
 			// set mode to teleported drt mode
+			// TODO: Make the following also work for intermodal trips: DRT + PT
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Plan selectedPlan = person.getSelectedPlan();
 				Plan modifiedPlan = scenario.getPopulation().getFactory().createPlan();
@@ -206,20 +211,13 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 
 	@Override
 	public void notifyStartup(StartupEvent event) {
-		ModeRoutingParams modeParams = new ModeRoutingParams(this.mode + "_teleportation");
-		modeParams.setBeelineDistanceFactor(1.0);
-		modeParams.setTeleportedModeSpeed(2.7777778);
-		this.scenario.getConfig().plansCalcRoute().addModeRoutingParams(modeParams);
-	
-		ModeParams currentScoringParams = this.scenario.getConfig().planCalcScore().getModes().get(this.mode);
-		ModeParams scoringParamsTeleportedMode = new ModeParams(this.mode + "_teleportation");
-		scoringParamsTeleportedMode.setConstant(currentScoringParams.getConstant());
-		scoringParamsTeleportedMode.setDailyMonetaryConstant(currentScoringParams.getDailyMonetaryConstant());
-		scoringParamsTeleportedMode.setDailyUtilityConstant(currentScoringParams.getDailyUtilityConstant());
-		scoringParamsTeleportedMode.setMarginalUtilityOfDistance(currentScoringParams.getMarginalUtilityOfDistance());
-		scoringParamsTeleportedMode.setMarginalUtilityOfTraveling(currentScoringParams.getMarginalUtilityOfTraveling());
-		scoringParamsTeleportedMode.setMonetaryDistanceRate(currentScoringParams.getMonetaryDistanceRate());
-		this.scenario.getConfig().planCalcScore().addModeParams(scoringParamsTeleportedMode);
+		log.info("Loading drt service area shape file...");
+		for (DrtConfigGroup drtCfg : MultiModeDrtConfigGroup.get(scenario.getConfig()).getModalElements()) {
+			if (drtCfg.getMode().equals(this.mode)) {
+				shpUtils = new ShpUtils(drtCfg.getDrtServiceAreaShapeFile());
+			}
+		}
+		log.info("Loading drt service area shape file... Done.");
 	}
 
 	@Override
@@ -236,7 +234,9 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			}	
 			
 			if (event.getLegMode().equals(this.mode + "_teleportation")) {
-				// compute fare and throw money event
+				// compute fares and throw money events
+				
+				// normal drt fare
 				double fare = 0.;
 				for (DrtFareConfigGroup drtFareCfg : DrtFaresConfigGroup.get(scenario.getConfig()).getDrtFareConfigGroups()) {
 					if (drtFareCfg.getMode().equals(this.mode)) {
@@ -251,6 +251,16 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare));
 					}
 				}
+				
+				// now consider the service area
+				if (shpUtils.isCoordInDrtServiceAreaWithBuffer(depLink.getCoord(), 1000.)
+						&& shpUtils.isCoordInDrtServiceAreaWithBuffer(arrLink.getCoord(), 1000.))  {
+					// trip within drt service area + buffer
+				} else {
+					// trip outside of drt service area + buffer
+		            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -999999999.));
+				}
+				
 			}	
 			this.person2drtDepLinkId.remove(event.getPersonId());
 			this.person2drtDepTime.remove(event.getPersonId());
