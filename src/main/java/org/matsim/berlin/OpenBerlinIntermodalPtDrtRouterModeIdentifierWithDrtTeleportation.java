@@ -19,7 +19,7 @@
  *                                                                         *
  * *********************************************************************** */
 
- package org.matsim.project;
+ package org.matsim.berlin;
 
 import java.util.ArrayList;
 import java.util.Arrays;

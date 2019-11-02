@@ -17,12 +17,15 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.drtSpeedUp;
+package org.matsim.berlin;
 
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.drtSpeedUp.DrtSpeedUpModule;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 
 /**
@@ -46,6 +49,15 @@ public class RunOpenBerlinWithDRTSpeedUp {
 		
 		Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario( config ) ;
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler( scenario ) ;
+		
+		controler.addOverridingModule(new AbstractModule() {
+			
+			@Override
+			public void install() {
+				// the current one in open berlin needs to be overwritten
+				bind(MainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterModeIdentifierWithDrtTeleportation.class);
+			}
+		});
 		
 		controler.addOverridingModule(new DrtSpeedUpModule());
 		
