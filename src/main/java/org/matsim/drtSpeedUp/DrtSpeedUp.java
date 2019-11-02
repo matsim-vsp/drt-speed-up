@@ -72,8 +72,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	private static final Logger log = Logger.getLogger(DrtSpeedUp.class);
 
 	private final double fractionOfIterationsSwitchOff = 0.7;
-	private final double fractionOfIterationSwitchOn = 0.1;
-	private final int intervalDetailedIteration = 5;
+	private final double fractionOfIterationSwitchOn = 0.0;
+	private final int intervalDetailedIteration = 10;
 	private final String mode = "drt";
 	private final double beelineDistanceFactorForFareCalculation = 1.3;
 	
