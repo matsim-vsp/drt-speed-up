@@ -79,7 +79,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	private final int intervalDetailedIteration = 10;
 	
 	private final double beelineDistanceFactorForFareCalculation = 1.3;
-	private final double walkingDistanceToServiceAreaForFareCalculation = 3000.;
+	private final double walkingDistanceToServiceAreaForFareCalculation = 2000.;
 	
 	private ShpUtils shpUtils;
 	
