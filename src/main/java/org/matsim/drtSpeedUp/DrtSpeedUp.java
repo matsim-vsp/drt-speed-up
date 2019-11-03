@@ -75,9 +75,11 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	private final ModeRoutingParams currentModeParams;
 
 	private final double fractionOfIterationsSwitchOff = 0.7;
-	private final double fractionOfIterationSwitchOn = 0.0;
+	private final double fractionOfIterationSwitchOn = 0.05;
 	private final int intervalDetailedIteration = 10;
+	
 	private final double beelineDistanceFactorForFareCalculation = 1.3;
+	private final double walkingDistanceToServiceAreaForFareCalculation = 3000.;
 	
 	private ShpUtils shpUtils;
 	
@@ -93,6 +95,10 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	
 	@Inject
 	private EventsManager events;
+
+	private int drtTeleportationOutsideServiceAreaTripCounter;
+	private int drtTeleportationTripCounter;
+	private int drtTripCounter;
 
 	public DrtSpeedUp(String mode) {
 		
@@ -110,6 +116,10 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
         beelineSpeeds.clear();
         person2drtDepTime.clear();
         person2drtDepLinkId.clear();
+        
+        drtTripCounter = 0;
+        drtTeleportationTripCounter = 0;
+        drtTeleportationOutsideServiceAreaTripCounter = 0;
     }
 	
 	@Override
@@ -122,12 +132,18 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			}
 			double averageBeelineSpeed = 2.7777778; // default value
 			if (beelineSpeeds.size() > 0) averageBeelineSpeed = sum / beelineSpeeds.size();
-			log.info("Setting teleported mode speed for " + this.mode + "_teleportation to the average beeline speed: " + averageBeelineSpeed);
+			log.info("Setting teleported mode speed for " + this.mode + "_teleportation to the average beeline speed: " + averageBeelineSpeed + " (previous value: " + this.currentModeParams.getTeleportedModeSpeed() + ")");
 			
 			// and then set the teleportation parameters accordingly
 			this.currentModeParams.setBeelineDistanceFactor(1.0);
 			this.currentModeParams.setTeleportedModeSpeed(averageBeelineSpeed);
 		}
+		
+		// print out some statistics
+		log.info("Number of simulated drt trips: " + drtTripCounter);
+		log.info("Number of teleported drt trips: " + drtTeleportationTripCounter);
+		log.info("Number of teleported drt trips outside the service area: " + drtTeleportationOutsideServiceAreaTripCounter);
+		log.info("Number of teleported drt trips within the service area: " + (drtTeleportationTripCounter - drtTeleportationOutsideServiceAreaTripCounter));
 	}
 
 	@Override
@@ -136,7 +152,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 				|| event.getIteration() >= this.fractionOfIterationsSwitchOff * this.scenario.getConfig().controler().getLastIteration()) {	
 			// run the detailed drt simulation
 			teleportDrtUsers = false;
-			log.info("Simulating drt in iteration " + event.getIteration());
+			log.info("Drt speed up disabled. Simulating drt in iteration " + event.getIteration());
 
 		} else {
 			if (event.getIteration() % this.intervalDetailedIteration == 0) {
@@ -146,13 +162,14 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			} else {
 				// teleport drt users
 				teleportDrtUsers = true;
-				log.info("Teleporting drt users in iteration " + event.getIteration());
+				log.info("Teleporting drt users in iteration " + event.getIteration() + ". Current teleported mode speed: " +  this.currentModeParams.getTeleportedModeSpeed());
 			}
 		}
 	}
 
 	@Override
 	public void notifyAfterMobsim(AfterMobsimEvent event) {
+		int modifiedPlansCounter = 0;
 		if (teleportDrtUsers) {
 			// set mode back to original drt mode
 			// TODO: Make the following also work for intermodal trips: DRT + PT
@@ -164,15 +181,18 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 						if (leg.getMode().equals(this.mode + "_teleportation")) {
 							leg.setMode(this.mode);
 							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
+							modifiedPlansCounter++;
 						}
 					}
 				}				
 			}
+			log.info("Number of trips changed from " + this.mode + "_teleportation to " + this.mode + ": " + modifiedPlansCounter);
 		}
 	}
 
 	@Override
 	public void notifyBeforeMobsim(BeforeMobsimEvent event) {
+		int modifiedPlansCounter = 0;
 		if (teleportDrtUsers) {
 			// set mode to teleported drt mode
 			// TODO: Make the following also work for intermodal trips: DRT + PT
@@ -190,7 +210,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 					String mode = new MainModeIdentifierImpl().identifyMainMode(trip.getTripElements());
 					if (mode.equals(this.mode)) {
 						modifiedPlan.addLeg(scenario.getPopulation().getFactory().createLeg(this.mode + "_teleportation"));
-					
+						modifiedPlansCounter++;
 					} else {
 						for (PlanElement pE : trip.getTripElements()) {
 							if (pE instanceof Activity) {
@@ -212,6 +232,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 				person.addPlan(modifiedPlan);
 				person.setSelectedPlan(modifiedPlan);
 			}
+			log.info("Number of trips changed from " + this.mode + " to " + this.mode + "_teleportation: " + modifiedPlansCounter);
 		}
 	}
 
@@ -237,10 +258,13 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			if (event.getLegMode().equals(this.mode)) {
 				// store the statistics
 				this.beelineSpeeds.add(beeline / time);
+				drtTripCounter++;
 			}	
 			
 			if (event.getLegMode().equals(this.mode + "_teleportation")) {
 				// compute fares and throw money events
+				
+				drtTeleportationTripCounter++;
 				
 				// normal drt fare
 				double fare = 0.;
@@ -259,12 +283,13 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 				}
 				
 				// now consider the service area
-				if (shpUtils.isCoordInDrtServiceAreaWithBuffer(depLink.getCoord(), 1000.)
-						&& shpUtils.isCoordInDrtServiceAreaWithBuffer(arrLink.getCoord(), 1000.))  {
+				if (shpUtils.isCoordInDrtServiceAreaWithBuffer(depLink.getCoord(), walkingDistanceToServiceAreaForFareCalculation)
+						&& shpUtils.isCoordInDrtServiceAreaWithBuffer(arrLink.getCoord(), walkingDistanceToServiceAreaForFareCalculation))  {
 					// trip within drt service area + buffer
 				} else {
 					// trip outside of drt service area + buffer
 		            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -999999999.));
+					drtTeleportationOutsideServiceAreaTripCounter++;
 				}
 				
 			}	

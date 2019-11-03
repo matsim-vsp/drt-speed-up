@@ -41,6 +41,7 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 			config.controler().setLastIteration(30);
 			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 			config.controler().setWritePlansInterval(1);
+			config.controler().setWriteEventsInterval(10);
 			config.controler().setOutputDirectory(utils.getOutputDirectory());
 			
 			// switch off transit and use teleportation instead
