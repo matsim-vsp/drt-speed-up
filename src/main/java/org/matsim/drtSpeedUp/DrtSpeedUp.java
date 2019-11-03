@@ -288,7 +288,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 					// trip within drt service area + buffer
 				} else {
 					// trip outside of drt service area + buffer
-		            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -999999999.));
+		            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -99999.));
 					drtTeleportationOutsideServiceAreaTripCounter++;
 				}
 				
