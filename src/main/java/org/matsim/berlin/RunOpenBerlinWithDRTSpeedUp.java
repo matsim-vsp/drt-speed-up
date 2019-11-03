@@ -25,6 +25,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup;
 import org.matsim.drtSpeedUp.DrtSpeedUpModule;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 
@@ -44,8 +45,8 @@ public class RunOpenBerlinWithDRTSpeedUp {
 			args = new String[] {"test/input/berlin-drt-v5.5-1pct.config.xml"}  ;
 		}
 		
-		Config config = RunDrtOpenBerlinScenario.prepareConfig( args ) ;
-		DrtSpeedUpModule.adjustConfig(config, "drt");
+		Config config = RunDrtOpenBerlinScenario.prepareConfig( args , new DrtSpeedUpConfigGroup() ) ;
+		DrtSpeedUpModule.adjustConfig(config);
 		
 		Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario( config ) ;
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler( scenario ) ;

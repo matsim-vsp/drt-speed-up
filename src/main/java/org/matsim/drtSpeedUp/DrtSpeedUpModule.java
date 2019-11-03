@@ -19,30 +19,40 @@
 
 package org.matsim.drtSpeedUp;
 
+import org.apache.log4j.Logger;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.AbstractModule;
+
+import com.google.inject.Inject;
 
 /**
 * @author ikaddoura
 */
 
 public class DrtSpeedUpModule extends AbstractModule {
+	private static final Logger log = Logger.getLogger(DrtSpeedUpModule.class);
 	
-	private final String mode = "drt";
+	@Inject
+	private DrtSpeedUpConfigGroup drtSpeedUpConfigGroup;
 
 	@Override
 	public void install() {
 
-		DrtSpeedUp speedUp = new DrtSpeedUp(mode);
+		DrtSpeedUp speedUp = new DrtSpeedUp(drtSpeedUpConfigGroup.getMode());
 		
 		this.addControlerListenerBinding().toInstance(speedUp);
 		this.addEventHandlerBinding().toInstance(speedUp);
 		
-        addRoutingModuleBinding(mode + "_teleportation").toProvider(new FlexibleBeelineTeleportationRouting(mode + "_teleportation", speedUp));
+        addRoutingModuleBinding(drtSpeedUpConfigGroup.getMode() + "_teleportation").toProvider(new FlexibleBeelineTeleportationRouting(drtSpeedUpConfigGroup.getMode() + "_teleportation", speedUp));
 	}
 
-	public static void adjustConfig(Config config, String mode) {	
+	public static void adjustConfig(Config config) {
+		String mode = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class).getMode();
+				
+		log.info("Adding scoring parameters for mode " + mode + "...");
+		
 		ModeParams originalScoringParams = config.planCalcScore().getModes().get(mode);
 		ModeParams scoringParamsFakeMode = new ModeParams(mode + "_teleportation");
 		scoringParamsFakeMode.setConstant(originalScoringParams.getConstant());

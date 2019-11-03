@@ -18,6 +18,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup;
 import org.matsim.drtSpeedUp.DrtSpeedUpModule;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 import org.matsim.testcases.MatsimTestUtils;
@@ -37,7 +38,52 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 		try {
 			final String[] args = {"test/input/berlin-drt-v5.5-1pct.config.xml"};
 			
-			Config config = RunDrtOpenBerlinScenario.prepareConfig( args ) ;
+			Config config = RunDrtOpenBerlinScenario.prepareConfig( args , new DrtSpeedUpConfigGroup()) ;
+			config.controler().setLastIteration(30);
+			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+			config.controler().setWritePlansInterval(30);
+			config.controler().setWriteEventsInterval(30);
+			config.controler().setOutputDirectory(utils.getOutputDirectory());
+			config.plans().setInputFile("drt-test-agents.xml");
+			
+			// switch off transit and use teleportation instead
+			config.transit().setUseTransit(false);
+			ModeRoutingParams pars = new ModeRoutingParams("pt");
+			pars.setTeleportedModeSpeed(3.1388889);
+			config.plansCalcRoute().addModeRoutingParams(pars);
+			
+			DrtSpeedUpModule.adjustConfig(config);
+
+			Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario( config ) ;
+			downsample( scenario.getPopulation().getPersons(), 1.0 );
+			
+			Controler controler = RunDrtOpenBerlinScenario.prepareControler( scenario ) ;
+			
+			controler.addOverridingModule(new AbstractModule() {
+				
+				@Override
+				public void install() {
+					// the current one in open berlin needs to be overwritten
+					bind(MainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterModeIdentifierWithDrtTeleportation.class);
+				}
+			});
+			
+			controler.addOverridingModule(new DrtSpeedUpModule());
+
+			controler.run() ;			
+			
+		} catch ( Exception ee ) {
+			ee.printStackTrace();
+			throw new RuntimeException(ee) ;
+		}
+	}
+	
+	@Test
+	public final void test2() {
+		try {
+			final String[] args = {"test/input/berlin-drt-v5.5-1pct.config.xml"};
+			
+			Config config = RunDrtOpenBerlinScenario.prepareConfig( args , new DrtSpeedUpConfigGroup()) ;
 			config.controler().setLastIteration(30);
 			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 			config.controler().setWritePlansInterval(1);
@@ -50,10 +96,10 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 			pars.setTeleportedModeSpeed(3.1388889);
 			config.plansCalcRoute().addModeRoutingParams(pars);
 			
-			DrtSpeedUpModule.adjustConfig(config, "drt");
+			DrtSpeedUpModule.adjustConfig(config);
 
 			Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario( config ) ;
-			downsample( scenario.getPopulation().getPersons(), 0.1 );
+			downsample( scenario.getPopulation().getPersons(), 0.01 );
 			
 			Controler controler = RunDrtOpenBerlinScenario.prepareControler( scenario ) ;
 			
