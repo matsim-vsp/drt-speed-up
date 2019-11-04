@@ -44,6 +44,7 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 			config.controler().setWritePlansInterval(30);
 			config.controler().setWriteEventsInterval(30);
 			config.controler().setOutputDirectory(utils.getOutputDirectory());
+			config.global().setNumberOfThreads(1);
 			config.plans().setInputFile("drt-test-agents.xml");
 			
 			// switch off transit and use teleportation instead
@@ -88,6 +89,7 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 			config.controler().setWritePlansInterval(1);
 			config.controler().setWriteEventsInterval(10);
+			config.global().setNumberOfThreads(1);
 			config.controler().setOutputDirectory(utils.getOutputDirectory());
 			
 			// switch off transit and use teleportation instead
