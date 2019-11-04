@@ -39,10 +39,10 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 			final String[] args = {"test/input/berlin-drt-v5.5-1pct.config.xml"};
 			
 			Config config = RunDrtOpenBerlinScenario.prepareConfig( args , new DrtSpeedUpConfigGroup()) ;
-			config.controler().setLastIteration(30);
+			config.controler().setLastIteration(10);
 			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-			config.controler().setWritePlansInterval(30);
-			config.controler().setWriteEventsInterval(30);
+			config.controler().setWritePlansInterval(10);
+			config.controler().setWriteEventsInterval(10);
 			config.controler().setOutputDirectory(utils.getOutputDirectory());
 			config.global().setNumberOfThreads(1);
 			config.plans().setInputFile("drt-test-agents.xml");
