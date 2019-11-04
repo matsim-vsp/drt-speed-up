@@ -1,6 +1,6 @@
 # drt-speed-up project
 
-An attempt to speed up a simulation run with drt and mode choice.
+An attempt to speed up a drt simulation with mode choice.
 
 (1) get some drt related statistics, e.g. average beeline speed, from a normal drt simulation,
 
