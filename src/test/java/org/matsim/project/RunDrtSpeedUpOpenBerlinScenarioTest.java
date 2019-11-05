@@ -41,8 +41,9 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 			Config config = RunDrtOpenBerlinScenario.prepareConfig( args , new DrtSpeedUpConfigGroup()) ;
 			config.controler().setLastIteration(10);
 			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-			config.controler().setWritePlansInterval(10);
+			config.controler().setWritePlansInterval(1);
 			config.controler().setWriteEventsInterval(10);
+			config.planCalcScore().setWriteExperiencedPlans(true);
 			config.controler().setOutputDirectory(utils.getOutputDirectory());
 			config.global().setNumberOfThreads(1);
 			config.plans().setInputFile("drt-test-agents.xml");
