@@ -25,7 +25,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.core.router.DefaultRoutingModules;
 import org.matsim.core.router.RoutingModule;
 
 class FlexibleBeelineTeleportationRouting implements Provider<RoutingModule> {
@@ -43,6 +42,11 @@ class FlexibleBeelineTeleportationRouting implements Provider<RoutingModule> {
 
 	@Override
 	public RoutingModule get() {
-		return DefaultRoutingModules.createTeleportationRouter(mode, scenario, speedUp.getModeParams());
+		return new SpeedUpTeleportationRoutingModule(
+			mode,
+			scenario,
+			speedUp );
+		
+//		return DefaultRoutingModules.createTeleportationRouter(mode, scenario, speedUp.getModeParams());
 	}
 }

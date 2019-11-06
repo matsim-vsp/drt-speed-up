@@ -31,24 +31,24 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
+import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.PersonMoneyEvent;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.api.core.v01.population.Route;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
-import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.events.BeforeMobsimEvent;
 import org.matsim.core.controler.events.IterationEndsEvent;
@@ -60,9 +60,6 @@ import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.controler.listener.StartupListener;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.router.MainModeIdentifierImpl;
-import org.matsim.core.router.TripStructureUtils;
-import org.matsim.core.router.TripStructureUtils.Trip;
 
 import com.google.inject.Inject;
 
@@ -70,17 +67,23 @@ import com.google.inject.Inject;
 * @author ikaddoura
 */
 
-final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEventHandler, StartupListener, BeforeMobsimListener, AfterMobsimListener, IterationStartsListener, IterationEndsListener, DrtRequestSubmittedEventHandler {
+final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehicleEventHandler, PersonArrivalEventHandler, StartupListener, BeforeMobsimListener, AfterMobsimListener, IterationStartsListener, IterationEndsListener, DrtRequestSubmittedEventHandler {
 	private static final Logger log = Logger.getLogger(DrtSpeedUp.class);
 		
 	private final Map<Id<Person>, Double> person2drtDepTime = new HashMap<>();
+	private final Map<Id<Person>, Double> personId2personEntersVehicleTime = new HashMap<>();
 	private final Map<Id<Person>, Id<Link>> person2drtDepLinkId = new HashMap<>();
-	private final List<Double> beelineSpeeds = new ArrayList<>();
+	
+	private final List<Double> beelineInVehicleSpeeds = new ArrayList<>();
 	private final List<Double> beelineFactors = new ArrayList<>();
+	private final List<Double> waitingTimes = new ArrayList<>();
+	
 	private final Set<Id<Person>> dailyFeeCharged = new HashSet<>();
     
 	private double currentBeelineFactorForDrtFare;
-	private final ModeRoutingParams currentModeParams;
+	private double currentAvgWaitingTime;
+	private double currentAvgInVehicleBeelineSpeed;
+	
 	private ShpUtils shpUtils;
     private DrtFareConfigGroup drtFareCfg;
     private DrtConfigGroup drtCfg;
@@ -103,21 +106,24 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 
 	public DrtSpeedUp(String mode) {
 				
-		// set some default params to start with
-		this.currentModeParams = new ModeRoutingParams(mode + "_teleportation");
-		this.currentModeParams.setBeelineDistanceFactor(1.0);
-		this.currentModeParams.setTeleportedModeSpeed(2.7777778);
+		// set some default params to start with		
+		this.currentAvgWaitingTime = 300.;
+		this.currentAvgInVehicleBeelineSpeed = 5.5555556;
 		this.currentBeelineFactorForDrtFare = 1.3;
 	}
 
 	@Override
     public void reset(int iteration) {
         dailyFeeCharged.clear();
-        beelineSpeeds.clear();
+      
+        beelineInVehicleSpeeds.clear();
         beelineFactors.clear();
+        waitingTimes.clear();
+        
         person2drtDepTime.clear();
         person2drtDepLinkId.clear();
-        
+        personId2personEntersVehicleTime.clear();
+     
         drtTripCounter = 0;
         drtTeleportationTripCounter = 0;
         drtTeleportationOutsideServiceAreaTripCounter = 0;
@@ -127,14 +133,17 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	public void notifyIterationEnds(IterationEndsEvent event) {
 		if (teleportDrtUsers == false) {
 			// update statstics
-			Double averageBeelineSpeed = beelineSpeeds.stream().mapToDouble(val -> val).average().orElse(2.7777778);
-			log.info("Setting teleported mode speed for " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to the average beeline speed: " + averageBeelineSpeed + " (previous value: " + this.currentModeParams.getTeleportedModeSpeed() + ")");
-			this.currentModeParams.setBeelineDistanceFactor(1.0); // keep 1.0 for the beeline distance factor because the teleported mode speed is considered as the beeline distance speed
-			this.currentModeParams.setTeleportedModeSpeed(averageBeelineSpeed);
+			double currentAvgInVehicleBeelineSpeed = beelineInVehicleSpeeds.stream().mapToDouble(val -> val).average().orElse(5.5555556);
+			log.info("Setting teleported mode speed for " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to the average beeline speed: " + currentAvgInVehicleBeelineSpeed + " (previous value: " + this.currentAvgInVehicleBeelineSpeed + ")");
+			this.currentAvgInVehicleBeelineSpeed = currentAvgInVehicleBeelineSpeed;
 			
-			Double averageBeelineFactor = beelineFactors.stream().mapToDouble(val -> val).average().orElse(1.3);			
+			double averageBeelineFactor = beelineFactors.stream().mapToDouble(val -> val).average().orElse(1.3);			
 			log.info("Setting unshared ride beeline distance factor for fare calculation of " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to: " + averageBeelineFactor + " (previous value: " + this.currentBeelineFactorForDrtFare + ")");
 			this.currentBeelineFactorForDrtFare = averageBeelineFactor;	
+			
+			double averageWaitingTime = waitingTimes.stream().mapToDouble(val -> val).average().orElse(300.);			
+			log.info("Setting waiting time for " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
+			this.currentAvgWaitingTime = averageWaitingTime;		
 		}
 		
 		// print out some statistics
@@ -161,7 +170,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 				// teleport drt users
 				teleportDrtUsers = true;
 				log.info("Teleporting drt users in iteration " + event.getIteration() + "."
-						+ " Current teleported mode speed: " +  this.currentModeParams.getTeleportedModeSpeed() + "."
+						+ " Current teleported mode speed: " +  this.currentAvgInVehicleBeelineSpeed + "."
+						+ " Current waiting time: " +  this.currentAvgWaitingTime + "."
 						+ " Current unshared ride beeline distance factor for fare calculation: " + this.currentBeelineFactorForDrtFare + ".");
 			}
 		}
@@ -169,10 +179,9 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 
 	@Override
 	public void notifyAfterMobsim(AfterMobsimEvent event) {
-		int modifiedPlansCounter = 0;
+		int modifiedLegsCounter = 0;
 		if (teleportDrtUsers) {
 			// set mode back to original drt mode
-			// TODO: Make the following also work for intermodal trips: DRT + PT
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Plan selectedPlan = person.getSelectedPlan();
 				for (PlanElement pE : selectedPlan.getPlanElements()) {		
@@ -180,59 +189,37 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 						Leg leg = (Leg) pE;
 						if (leg.getMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
-							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
-							modifiedPlansCounter++;
+							leg.setRoute((Route) leg.getAttributes().getAttribute("drtRoute"));
+							modifiedLegsCounter++;
 						}
 					}
 				}				
 			}
-			log.info("Number of trips changed from " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to " + this.drtSpeedUpConfigGroup.getMode() + ": " + modifiedPlansCounter);
+			log.info("Number of legs changed from " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to " + this.drtSpeedUpConfigGroup.getMode() + ": " + modifiedLegsCounter);
 		}
 	}
 
 	@Override
 	public void notifyBeforeMobsim(BeforeMobsimEvent event) {
-		int modifiedPlansCounter = 0;
+		int modifiedLegsCounter = 0;
 		if (teleportDrtUsers) {
 			// set mode to teleported drt mode
-			// TODO: Make the following also work for intermodal trips: DRT + PT
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Plan selectedPlan = person.getSelectedPlan();
-				Plan modifiedPlan = scenario.getPopulation().getFactory().createPlan();
-				boolean isFirstTrip = true;
-				for (Trip trip : TripStructureUtils.getTrips(selectedPlan)) {
+				
+				for (PlanElement pE : selectedPlan.getPlanElements()) {
 					
-					if (isFirstTrip) {
-						modifiedPlan.addActivity(trip.getOriginActivity());
-						isFirstTrip = false;
-					}					
-					
-					String mode = new MainModeIdentifierImpl().identifyMainMode(trip.getTripElements());
-					if (mode.equals(this.drtSpeedUpConfigGroup.getMode())) {
-						modifiedPlan.addLeg(scenario.getPopulation().getFactory().createLeg(this.drtSpeedUpConfigGroup.getMode() + "_teleportation"));
-						modifiedPlansCounter++;
-					} else {
-						for (PlanElement pE : trip.getTripElements()) {
-							if (pE instanceof Activity) {
-								Activity act = (Activity) pE;
-								modifiedPlan.addActivity(act);
-							}
-							if (pE instanceof Leg) {
-								Leg leg = (Leg) pE;
-								modifiedPlan.addLeg(leg);
-							}
+					if (pE instanceof Leg) {
+						Leg leg = (Leg) pE;
+						if (leg.getMode().equals(drtSpeedUpConfigGroup.getMode())) {
+							leg.setMode(this.drtSpeedUpConfigGroup.getMode() + "_teleportation");
+							leg.getAttributes().putAttribute("drtRoute", leg.getRoute());
+							modifiedLegsCounter++;
 						}
 					}
-					
-					modifiedPlan.addActivity(trip.getDestinationActivity());
 				}
-				
-				// replace previous plan
-				person.removePlan(selectedPlan);
-				person.addPlan(modifiedPlan);
-				person.setSelectedPlan(modifiedPlan);
 			}
-			log.info("Number of trips changed from " + this.drtSpeedUpConfigGroup.getMode() + " to " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation: " + modifiedPlansCounter);
+			log.info("Number of legs changed from " + this.drtSpeedUpConfigGroup.getMode() + " to " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation: " + modifiedLegsCounter);
 		}
 	}
 
@@ -268,16 +255,24 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	@Override
 	public void handleEvent(PersonArrivalEvent event) {
 		if (event.getLegMode().equals(this.drtSpeedUpConfigGroup.getMode()) || event.getLegMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
+			
 			Link depLink = this.scenario.getNetwork().getLinks().get(this.person2drtDepLinkId.get(event.getPersonId()));
 			Link arrLink = this.scenario.getNetwork().getLinks().get(event.getLinkId());
 			double beeline = NetworkUtils.getEuclideanDistance(depLink.getCoord(), arrLink.getCoord());
-			double time = event.getTime() - this.person2drtDepTime.get(event.getPersonId());
-			
+						
 			if (event.getLegMode().equals(this.drtSpeedUpConfigGroup.getMode())) {
+
 				// store the statistics
-				this.beelineSpeeds.add(beeline / time);		
-				this.beelineFactors.add(this.lastRequestSubmission.get(event.getPersonId()).getUnsharedRideDistance() / beeline);	
+				double inVehtime = event.getTime() - this.personId2personEntersVehicleTime.get(event.getPersonId());
+				double waitingTime = this.person2drtDepTime.get(event.getPersonId()) - this.personId2personEntersVehicleTime.get(event.getPersonId());
+
+				if (inVehtime > 0) this.beelineInVehicleSpeeds.add(beeline / inVehtime);		
+				if (beeline > 0) this.beelineFactors.add(this.lastRequestSubmission.get(event.getPersonId()).getUnsharedRideDistance() / beeline);
+				this.waitingTimes.add(waitingTime);
+				
 				drtTripCounter++;
+			
+				this.personId2personEntersVehicleTime.remove(event.getPersonId());
 			}	
 			
 			if (event.getLegMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
@@ -293,7 +288,9 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 	            }
 				fare += drtFareCfg.getBasefare();
 				fare += drtFareCfg.getDistanceFare_m() * this.currentBeelineFactorForDrtFare * beeline;
-				fare += drtFareCfg.getTimeFare_h() * time / 3600.;
+				double travelTime = event.getTime() - this.person2drtDepTime.get(event.getPersonId());
+				double inVehicleTime = travelTime - this.currentAvgWaitingTime;
+				fare += drtFareCfg.getTimeFare_h() * inVehicleTime / 3600.;
 				if (fare < drtFareCfg.getMinFarePerTrip()) fare = drtFareCfg.getMinFarePerTrip();
 	            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare));
 				
@@ -307,7 +304,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 					drtTeleportationOutsideServiceAreaTripCounter++;
 				}
 				
-			}	
+			}
+			
 			this.person2drtDepLinkId.remove(event.getPersonId());
 			this.person2drtDepTime.remove(event.getPersonId());
 		}
@@ -321,10 +319,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
 			this.person2drtDepLinkId.put(event.getPersonId(), event.getLinkId());
 		}
 	}
-
-	ModeRoutingParams getModeParams() {
-		return currentModeParams;
-	}
 	
 	@Override
     public void handleEvent(DrtRequestSubmittedEvent event) {
@@ -332,6 +326,21 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonArrivalEven
             this.lastRequestSubmission.put(event.getPersonId(), event);
         }
     }
+
+	@Override
+	public void handleEvent(PersonEntersVehicleEvent event) {
+		if (this.person2drtDepTime.get(event.getPersonId()) != null) {
+			this.personId2personEntersVehicleTime.put(event.getPersonId(), event.getTime());
+		}	
+	}
+
+	public double getCurrentAvgWaitingTime() {
+		return currentAvgWaitingTime;
+	}
+
+	public double getCurrentAvgInVehicleBeelineSpeed() {
+		return currentAvgInVehicleBeelineSpeed;
+	}
 	
 }
 
