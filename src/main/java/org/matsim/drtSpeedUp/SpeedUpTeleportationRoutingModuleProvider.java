@@ -27,12 +27,12 @@ import javax.inject.Provider;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.router.RoutingModule;
 
-class FlexibleBeelineTeleportationRouting implements Provider<RoutingModule> {
+class SpeedUpTeleportationRoutingModuleProvider implements Provider<RoutingModule> {
 
 	private final DrtSpeedUp speedUp;
 	private final String mode;
 
-	public FlexibleBeelineTeleportationRouting(String mode, DrtSpeedUp speedUp) {
+	public SpeedUpTeleportationRoutingModuleProvider(String mode, DrtSpeedUp speedUp) {
 		this.speedUp = speedUp;
 		this.mode = mode;
 	}
@@ -46,7 +46,5 @@ class FlexibleBeelineTeleportationRouting implements Provider<RoutingModule> {
 			mode,
 			scenario,
 			speedUp );
-		
-//		return DefaultRoutingModules.createTeleportationRouter(mode, scenario, speedUp.getModeParams());
 	}
 }

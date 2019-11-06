@@ -94,8 +94,6 @@ class SpeedUpTeleportationRoutingModule implements RoutingModule {
 		leg.setRoute(route);
 		leg.setDepartureTime(depTime);
 		leg.setTravelTime(travTime);
-		Leg r = (leg);
-		r.setTravelTime( depTime + travTime - r.getDepartureTime() );
 		return travTime;
 	}
 

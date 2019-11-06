@@ -42,7 +42,7 @@ public class RunDrtSpeedUpOpenBerlinScenarioTest {
 			config.controler().setLastIteration(10);
 			config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 			config.controler().setWritePlansInterval(1);
-			config.controler().setWriteEventsInterval(10);
+			config.controler().setWriteEventsInterval(1);
 			config.planCalcScore().setWriteExperiencedPlans(true);
 			config.controler().setOutputDirectory(utils.getOutputDirectory());
 			config.global().setNumberOfThreads(1);

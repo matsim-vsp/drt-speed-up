@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
@@ -46,6 +47,7 @@ import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
+import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.events.BeforeMobsimEvent;
@@ -57,7 +59,10 @@ import org.matsim.core.controler.listener.BeforeMobsimListener;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.controler.listener.StartupListener;
+import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.utils.geometry.CoordUtils;
 
 import com.google.inject.Inject;
 
@@ -181,8 +186,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 						Leg leg = (Leg) pE;
 						if (leg.getMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
-							leg.setRoute((Route) leg.getAttributes().getAttribute("drtRoute"));
-							leg.getAttributes().removeAttribute("drtRoute");
+							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
+														
 							modifiedLegsCounter++;
 						}
 					}
@@ -206,7 +211,24 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 						Leg leg = (Leg) pE;
 						if (leg.getMode().equals(drtSpeedUpConfigGroup.getMode())) {
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode() + "_teleportation");
-							leg.getAttributes().putAttribute("drtRoute", leg.getRoute());
+							
+							Link startLink = this.scenario.getNetwork().getLinks().get(leg.getRoute().getStartLinkId());
+							Link endLink = this.scenario.getNetwork().getLinks().get(leg.getRoute().getEndLinkId());
+							
+							final Coord fromActCoord = 	startLink.getCoord();
+							Gbl.assertNotNull( fromActCoord );
+							final Coord toActCoord = endLink.getCoord();
+							Gbl.assertNotNull( toActCoord );
+							double dist = CoordUtils.calcEuclideanDistance( fromActCoord, toActCoord );
+							Route route = this.scenario.getPopulation().getFactory().getRouteFactories().createRoute(Route.class, startLink.getId(), endLink.getId());
+							int travTime = (int) ( this.currentAvgWaitingTime + (dist / this.currentAvgInVehicleBeelineSpeed) );
+							route.setTravelTime(travTime);
+							route.setDistance(dist);
+							leg.setRoute(route);
+							leg.setTravelTime(travTime);
+							
+//							leg.setRoute(null);
+							
 							modifiedLegsCounter++;
 						}
 					}
