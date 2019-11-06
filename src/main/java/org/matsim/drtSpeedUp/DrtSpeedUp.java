@@ -182,6 +182,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 						if (leg.getMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
 							leg.setRoute((Route) leg.getAttributes().getAttribute("drtRoute"));
+							leg.getAttributes().removeAttribute("drtRoute");
 							modifiedLegsCounter++;
 						}
 					}
