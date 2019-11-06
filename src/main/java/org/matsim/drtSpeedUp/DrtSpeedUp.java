@@ -129,25 +129,16 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
     }
 	
 	@Override
-	public void notifyIterationEnds(IterationEndsEvent event) {
-		if (teleportDrtUsers == false) {
-			// update statstics
-			double currentAvgInVehicleBeelineSpeed = beelineInVehicleSpeeds.stream().mapToDouble(val -> val).average().orElse(5.5555556);
-			log.info("Setting teleported mode speed for " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to the average beeline speed: " + currentAvgInVehicleBeelineSpeed + " (previous value: " + this.currentAvgInVehicleBeelineSpeed + ")");
-			this.currentAvgInVehicleBeelineSpeed = currentAvgInVehicleBeelineSpeed;
-			
-			double averageBeelineFactor = beelineFactors.stream().mapToDouble(val -> val).average().orElse(1.3);			
-			log.info("Setting unshared ride beeline distance factor for fare calculation of " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to: " + averageBeelineFactor + " (previous value: " + this.currentBeelineFactorForDrtFare + ")");
-			this.currentBeelineFactorForDrtFare = averageBeelineFactor;	
-			
-			double averageWaitingTime = waitingTimes.stream().mapToDouble(val -> val).average().orElse(300.);			
-			log.info("Setting waiting time for " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
-			this.currentAvgWaitingTime = averageWaitingTime;		
-		}
+	public void notifyStartup(StartupEvent event) {
 		
-		// print out some statistics
-		log.info("Number of simulated drt trips: " + drtTripCounter);
-		log.info("Number of teleported drt trips: " + drtTeleportationTripCounter);
+		for (DrtFareConfigGroup drtFareCfg : DrtFaresConfigGroup.get(scenario.getConfig()).getDrtFareConfigGroups()) {
+			if (drtFareCfg.getMode().equals(this.drtSpeedUpConfigGroup.getMode())) {
+				this.drtFareCfg = drtFareCfg;
+			}
+		}
+		if (this.drtFareCfg == null) {
+			throw new RuntimeException("Expecting a fare config group for " + this.drtSpeedUpConfigGroup.getMode() + ". Aborting...");
+		}
 	}
 
 	@Override
@@ -173,29 +164,27 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			}
 		}
 	}
-
+	
 	@Override
-	public void notifyAfterMobsim(AfterMobsimEvent event) {
-		int modifiedLegsCounter = 0;
-		if (teleportDrtUsers) {
-			// set mode back to original drt mode
-			for (Person person : scenario.getPopulation().getPersons().values()) {
-				Plan selectedPlan = person.getSelectedPlan();
-				for (PlanElement pE : selectedPlan.getPlanElements()) {		
-					if (pE instanceof Leg) {
-						Leg leg = (Leg) pE;
-						if (leg.getMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
-							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
-							// TODO: Check if this does anything harmful...
-							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
-														
-							modifiedLegsCounter++;
-						}
-					}
-				}				
-			}
-			log.info("Number of legs changed from " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to " + this.drtSpeedUpConfigGroup.getMode() + ": " + modifiedLegsCounter);
+	public void notifyIterationEnds(IterationEndsEvent event) {
+		if (teleportDrtUsers == false) {
+			// update statstics
+			double currentAvgInVehicleBeelineSpeed = beelineInVehicleSpeeds.stream().mapToDouble(val -> val).average().orElse(5.5555556);
+			log.info("Setting teleported mode speed for " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to the average beeline speed: " + currentAvgInVehicleBeelineSpeed + " (previous value: " + this.currentAvgInVehicleBeelineSpeed + ")");
+			this.currentAvgInVehicleBeelineSpeed = currentAvgInVehicleBeelineSpeed;
+			
+			double averageBeelineFactor = beelineFactors.stream().mapToDouble(val -> val).average().orElse(1.3);			
+			log.info("Setting unshared ride beeline distance factor for fare calculation of " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to: " + averageBeelineFactor + " (previous value: " + this.currentBeelineFactorForDrtFare + ")");
+			this.currentBeelineFactorForDrtFare = averageBeelineFactor;	
+			
+			double averageWaitingTime = waitingTimes.stream().mapToDouble(val -> val).average().orElse(300.);			
+			log.info("Setting waiting time for " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
+			this.currentAvgWaitingTime = averageWaitingTime;		
 		}
+		
+		// print out some statistics
+		log.info("Number of simulated drt trips: " + drtTripCounter);
+		log.info("Number of teleported drt trips: " + drtTeleportationTripCounter);
 	}
 
 	@Override
@@ -236,17 +225,28 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			log.info("Number of legs changed from " + this.drtSpeedUpConfigGroup.getMode() + " to " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation: " + modifiedLegsCounter);
 		}
 	}
-
+	
 	@Override
-	public void notifyStartup(StartupEvent event) {
-		
-		for (DrtFareConfigGroup drtFareCfg : DrtFaresConfigGroup.get(scenario.getConfig()).getDrtFareConfigGroups()) {
-			if (drtFareCfg.getMode().equals(this.drtSpeedUpConfigGroup.getMode())) {
-				this.drtFareCfg = drtFareCfg;
+	public void notifyAfterMobsim(AfterMobsimEvent event) {
+		int modifiedLegsCounter = 0;
+		if (teleportDrtUsers) {
+			// set mode back to original drt mode
+			for (Person person : scenario.getPopulation().getPersons().values()) {
+				Plan selectedPlan = person.getSelectedPlan();
+				for (PlanElement pE : selectedPlan.getPlanElements()) {		
+					if (pE instanceof Leg) {
+						Leg leg = (Leg) pE;
+						if (leg.getMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
+							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
+							// TODO: Check if this does anything harmful...
+							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
+														
+							modifiedLegsCounter++;
+						}
+					}
+				}				
 			}
-		}
-		if (this.drtFareCfg == null) {
-			throw new RuntimeException("Expecting a fare config group for " + this.drtSpeedUpConfigGroup.getMode() + ". Aborting...");
+			log.info("Number of legs changed from " + this.drtSpeedUpConfigGroup.getMode() + "_teleportation to " + this.drtSpeedUpConfigGroup.getMode() + ": " + modifiedLegsCounter);
 		}
 	}
 
@@ -259,17 +259,17 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			double beeline = NetworkUtils.getEuclideanDistance(depLink.getCoord(), arrLink.getCoord());
 						
 			if (event.getLegMode().equals(this.drtSpeedUpConfigGroup.getMode())) {
-
 				// store the statistics
+
+				drtTripCounter++;
+
 				double inVehtime = event.getTime() - this.personId2personEntersVehicleTime.get(event.getPersonId());
 				double waitingTime = this.personId2personEntersVehicleTime.get(event.getPersonId()) - this.person2drtDepTime.get(event.getPersonId());
 
 				if (inVehtime > 0) this.beelineInVehicleSpeeds.add(beeline / inVehtime);		
 				if (beeline > 0) this.beelineFactors.add(this.lastRequestSubmission.get(event.getPersonId()).getUnsharedRideDistance() / beeline);
 				this.waitingTimes.add(waitingTime);
-				
-				drtTripCounter++;
-			
+							
 				this.personId2personEntersVehicleTime.remove(event.getPersonId());
 			}	
 			
@@ -278,7 +278,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				
 				drtTeleportationTripCounter++;
 				
-				// normal drt fare
 				double fare = 0.;
 				if (!dailyFeeCharged.contains(event.getPersonId())) {
 					dailyFeeCharged.add(event.getPersonId());
@@ -319,14 +318,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		if (this.person2drtDepTime.get(event.getPersonId()) != null) {
 			this.personId2personEntersVehicleTime.put(event.getPersonId(), event.getTime());
 		}	
-	}
-
-	double getCurrentAvgWaitingTime() {
-		return currentAvgWaitingTime;
-	}
-
-	double getCurrentAvgInVehicleBeelineSpeed() {
-		return currentAvgInVehicleBeelineSpeed;
 	}
 	
 }
