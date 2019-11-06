@@ -44,8 +44,6 @@ public class DrtSpeedUpModule extends AbstractModule {
 		
 		this.addControlerListenerBinding().toInstance(speedUp);
 		this.addEventHandlerBinding().toInstance(speedUp);
-		
-//        addRoutingModuleBinding(drtSpeedUpConfigGroup.getMode() + "_teleportation").toProvider(new SpeedUpTeleportationRoutingModuleProvider(drtSpeedUpConfigGroup.getMode() + "_teleportation", speedUp));
 	}
 
 	public static void adjustConfig(Config config) {
