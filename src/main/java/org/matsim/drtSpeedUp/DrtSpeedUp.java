@@ -240,7 +240,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 
 				// store the statistics
 				double inVehtime = event.getTime() - this.personId2personEntersVehicleTime.get(event.getPersonId());
-				double waitingTime = this.person2drtDepTime.get(event.getPersonId()) - this.personId2personEntersVehicleTime.get(event.getPersonId());
+				double waitingTime = this.personId2personEntersVehicleTime.get(event.getPersonId()) - this.person2drtDepTime.get(event.getPersonId());
 
 				if (inVehtime > 0) this.beelineInVehicleSpeeds.add(beeline / inVehtime);		
 				if (beeline > 0) this.beelineFactors.add(this.lastRequestSubmission.get(event.getPersonId()).getUnsharedRideDistance() / beeline);
