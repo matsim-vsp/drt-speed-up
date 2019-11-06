@@ -46,8 +46,6 @@ import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
-import org.matsim.contrib.drt.run.DrtConfigGroup;
-import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.events.BeforeMobsimEvent;
@@ -84,9 +82,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	private double currentAvgWaitingTime;
 	private double currentAvgInVehicleBeelineSpeed;
 	
-	private ShpUtils shpUtils;
     private DrtFareConfigGroup drtFareCfg;
-    private DrtConfigGroup drtCfg;
 	
 	private boolean teleportDrtUsers = false;
     private final Map<Id<Person>, DrtRequestSubmittedEvent> lastRequestSubmission = new HashMap<>();
@@ -100,7 +96,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	@Inject
 	private DrtSpeedUpConfigGroup drtSpeedUpConfigGroup;
 
-	private int drtTeleportationOutsideServiceAreaTripCounter;
 	private int drtTeleportationTripCounter;
 	private int drtTripCounter;
 
@@ -126,7 +121,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
      
         drtTripCounter = 0;
         drtTeleportationTripCounter = 0;
-        drtTeleportationOutsideServiceAreaTripCounter = 0;
     }
 	
 	@Override
@@ -149,8 +143,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		// print out some statistics
 		log.info("Number of simulated drt trips: " + drtTripCounter);
 		log.info("Number of teleported drt trips: " + drtTeleportationTripCounter);
-		log.info("Number of teleported drt trips outside the service area: " + drtTeleportationOutsideServiceAreaTripCounter);
-		log.info("Number of teleported drt trips within the service area: " + (drtTeleportationTripCounter - drtTeleportationOutsideServiceAreaTripCounter));
 	}
 
 	@Override
@@ -225,22 +217,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 
 	@Override
 	public void notifyStartup(StartupEvent event) {
-		log.info("Loading drt service area shape file...");
-		for (DrtConfigGroup drtCfg : MultiModeDrtConfigGroup.get(scenario.getConfig()).getModalElements()) {
-			if (drtCfg.getMode().equals(this.drtSpeedUpConfigGroup.getMode())) {
-				shpUtils = new ShpUtils(drtCfg.getDrtServiceAreaShapeFile());
-			}
-		}
-		log.info("Loading drt service area shape file... Done.");	
-		
-		for (DrtConfigGroup drtCfg : MultiModeDrtConfigGroup.get(scenario.getConfig()).getModalElements()) {
-			if (drtCfg.getMode().equals(this.drtSpeedUpConfigGroup.getMode())) {
-				this.drtCfg = drtCfg;
-			}
-		}
-		if (this.drtCfg == null) {
-			throw new RuntimeException("Expecting a drt config group for " + this.drtSpeedUpConfigGroup.getMode() + ". Aborting...");
-		}
 		
 		for (DrtFareConfigGroup drtFareCfg : DrtFaresConfigGroup.get(scenario.getConfig()).getDrtFareConfigGroups()) {
 			if (drtFareCfg.getMode().equals(this.drtSpeedUpConfigGroup.getMode())) {
@@ -292,18 +268,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				double inVehicleTime = travelTime - this.currentAvgWaitingTime;
 				fare += drtFareCfg.getTimeFare_h() * inVehicleTime / 3600.;
 				if (fare < drtFareCfg.getMinFarePerTrip()) fare = drtFareCfg.getMinFarePerTrip();
-	            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare));
-				
-				// now consider the service area
-				if (shpUtils.isCoordInDrtServiceAreaWithBuffer(depLink.getCoord(), drtCfg.getMaxWalkDistance())
-						&& shpUtils.isCoordInDrtServiceAreaWithBuffer(arrLink.getCoord(), drtCfg.getMaxWalkDistance()))  {
-					// trip within drt service area + buffer
-				} else {
-					// trip outside of drt service area + buffer
-		            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -99999.));
-					drtTeleportationOutsideServiceAreaTripCounter++;
-				}
-				
+	            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare));			
 			}
 			
 			this.person2drtDepLinkId.remove(event.getPersonId());
@@ -334,11 +299,11 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		}	
 	}
 
-	public double getCurrentAvgWaitingTime() {
+	double getCurrentAvgWaitingTime() {
 		return currentAvgWaitingTime;
 	}
 
-	public double getCurrentAvgInVehicleBeelineSpeed() {
+	double getCurrentAvgInVehicleBeelineSpeed() {
 		return currentAvgInVehicleBeelineSpeed;
 	}
 	
