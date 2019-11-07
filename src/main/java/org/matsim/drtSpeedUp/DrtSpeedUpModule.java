@@ -50,7 +50,7 @@ public class DrtSpeedUpModule extends AbstractModule {
 		String mode = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class).getMode();
 				
 		log.info("Adding scoring parameters for mode " + mode + "...");
-		
+				
 		ModeParams originalScoringParams = config.planCalcScore().getModes().get(mode);
 		ModeParams scoringParamsFakeMode = new ModeParams(mode + "_teleportation");
 		scoringParamsFakeMode.setConstant(originalScoringParams.getConstant());
@@ -59,7 +59,7 @@ public class DrtSpeedUpModule extends AbstractModule {
 		scoringParamsFakeMode.setMarginalUtilityOfDistance(originalScoringParams.getMarginalUtilityOfDistance());
 		scoringParamsFakeMode.setMarginalUtilityOfTraveling(originalScoringParams.getMarginalUtilityOfTraveling());
 		scoringParamsFakeMode.setMonetaryDistanceRate(originalScoringParams.getMonetaryDistanceRate());
-		config.planCalcScore().addModeParams(scoringParamsFakeMode);
+		config.planCalcScore().getScoringParametersPerSubpopulation().values().forEach(k -> k.addModeParams(scoringParamsFakeMode));
 	}
 
 }
