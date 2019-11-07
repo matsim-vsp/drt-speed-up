@@ -1,9 +1,10 @@
-package org.matsim.project;
+package org.matsim.drtSpeedUp;
 
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.matsim.example.RunExampleDrtSpeedUp;
 import org.matsim.testcases.MatsimTestUtils;
 
 /**
@@ -18,6 +19,7 @@ public class RunDrtSpeedUpTest {
 	
 	@Test
 	public final void test1() {
-		// TODO
+		RunExampleDrtSpeedUp.main(null);
 	}
+	
 }
