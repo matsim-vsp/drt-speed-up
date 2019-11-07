@@ -94,7 +94,14 @@
         	<version>${matsim.version}</version>
        		<scope>compile</scope>
      	</dependency>
-		
+     	
+     	<!-- https://mvnrepository.com/artifact/jgridshift/jgridshift -->
+		<dependency>
+   		 	<groupId>jgridshift</groupId>
+    		<artifactId>jgridshift</artifactId>
+    		<version>1.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
