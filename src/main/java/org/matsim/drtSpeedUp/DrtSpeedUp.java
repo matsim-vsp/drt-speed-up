@@ -164,10 +164,11 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		
 		if (teleportDrtUsers) {
 			// use several threads
+			// TODO
 			
 		} else {
 			// use one thread
-			
+			// TODO
 		}
 	}
 	
