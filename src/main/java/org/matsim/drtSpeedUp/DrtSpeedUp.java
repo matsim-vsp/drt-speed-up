@@ -47,7 +47,6 @@ import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
-import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.events.BeforeMobsimEvent;
@@ -162,6 +161,14 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 						+ " Current unshared ride beeline distance factor for fare calculation: " + this.currentBeelineFactorForDrtFare + ".");
 			}
 		}
+		
+		if (teleportDrtUsers) {
+			// use several threads
+			
+		} else {
+			// use one thread
+			
+		}
 	}
 	
 	@Override
@@ -199,6 +206,9 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 					if (pE instanceof Leg) {
 						Leg leg = (Leg) pE;
 						if (leg.getMode().equals(drtSpeedUpConfigGroup.getMode())) {
+							
+							leg.getAttributes().putAttribute("drtRoute", leg.getRoute());
+							
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode() + "_teleportation");
 							
 							Link startLink = this.scenario.getNetwork().getLinks().get(leg.getRoute().getStartLinkId());
@@ -237,9 +247,10 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 						Leg leg = (Leg) pE;
 						if (leg.getMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
-							// TODO: Check if this does anything harmful...
-							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
-														
+
+							leg.setRoute((Route) leg.getAttributes().getAttribute("drtRoute"));
+//							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
+							leg.getAttributes().removeAttribute("drtRoute");					
 							modifiedLegsCounter++;
 						}
 					}
