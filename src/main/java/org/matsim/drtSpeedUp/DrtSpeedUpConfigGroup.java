@@ -40,7 +40,7 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	
 	private String mode = "drt";
 	private double fractionOfIterationsSwitchOff = 0.6;
-	private double fractionOfIterationSwitchOn = 0.1;
+	private double fractionOfIterationSwitchOn = 0.01;
 	private int intervalDetailedIteration = 10;
 
 	@StringGetter( MODE )
