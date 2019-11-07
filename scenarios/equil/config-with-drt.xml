@@ -28,7 +28,7 @@
 			<param name="maxWaitTime" value="300.0"/>
 			<param name="maxWalkDistance" value="20000.0"/>
 			<param name="mode" value="drt"/>
-			<param name="numberOfThreads" value="4"/>
+			<param name="numberOfThreads" value="1"/>
 			<param name="operationalScheme" value="serviceAreaBased"/>
 			<param name="drtServiceAreaShapeFile" value="./equil-zone/equi-zone.shp" />
 			<param name="plotDetailedWarnings" value="true"/>
