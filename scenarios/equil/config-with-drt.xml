@@ -7,6 +7,10 @@
 		<param name="runId" value="test1" />
 		<param name="overwriteFiles" value="deleteDirectoryIfExists" />
 	</module>
+	<module name="global" >
+		<param name="numberOfThreads" value="1" />
+		<param name="randomSeed" value="4711" />
+	</module>
 	<module name="drtSpeedUp" >
 		<param name="fractionOfIterationSwitchOn" value="0.01" />
 		<param name="fractionOfIterationsSwitchOff" value="0.6" />
