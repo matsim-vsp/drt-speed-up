@@ -43,7 +43,7 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private double fractionOfIterationsSwitchOff = 0.6;
 	private double fractionOfIterationSwitchOn = 0.01;
 	private int intervalDetailedIteration = 10;
-	private int numberOfThreadsForMobsimDuringSpeedUp = 4;
+	private int numberOfThreadsForMobsimDuringSpeedUp = 1;
 
 	@StringGetter( MODE )
 	public String getMode() {
