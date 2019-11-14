@@ -33,6 +33,7 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private static final String SWITCH_OFF_FRACTION_ITERATION = "fractionOfIterationsSwitchOff";
 	private static final String SWITCH_ON_FRACTION_ITERATION = "fractionOfIterationSwitchOn";
 	private static final String DETAILED_ITERATION_INTERVAL = "intervalDetailedIteration";
+	private static final String NUMBER_OF_THREADS_FOR_MOBSIM_DURING_SPEED_UP = "numberOfThreadsForMobsimDuringSpeedUp";
 
 	public DrtSpeedUpConfigGroup() {
 		super(GROUP_NAME);
@@ -42,6 +43,7 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private double fractionOfIterationsSwitchOff = 0.6;
 	private double fractionOfIterationSwitchOn = 0.01;
 	private int intervalDetailedIteration = 10;
+	private int numberOfThreadsForMobsimDuringSpeedUp = 4;
 
 	@StringGetter( MODE )
 	public String getMode() {
@@ -81,6 +83,16 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter( DETAILED_ITERATION_INTERVAL )
 	public void setIntervalDetailedIteration(int intervalDetailedIteration) {
 		this.intervalDetailedIteration = intervalDetailedIteration;
+	}
+
+	@StringGetter( NUMBER_OF_THREADS_FOR_MOBSIM_DURING_SPEED_UP )
+	public int getNumberOfThreadsForMobsimDuringSpeedUp() {
+		return numberOfThreadsForMobsimDuringSpeedUp;
+	}
+
+	@StringSetter( NUMBER_OF_THREADS_FOR_MOBSIM_DURING_SPEED_UP )
+	public void setNumberOfThreadsForMobsimDuringSpeedUp(int numberOfThreadsForMobsimDuringSpeedUp) {
+		this.numberOfThreadsForMobsimDuringSpeedUp = numberOfThreadsForMobsimDuringSpeedUp;
 	}
 			
 }

@@ -163,12 +163,25 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		}
 		
 		if (teleportDrtUsers) {
-			// use several threads
-			// TODO
+			this.scenario.getConfig().qsim().setNumberOfThreads(this.drtSpeedUpConfigGroup.getNumberOfThreadsForMobsimDuringSpeedUp());
+			
+//			Controler controler = (Controler) event.getServices();
+//			controler.configureQSimComponents(components -> {	
+//			});
 			
 		} else {
 			// use one thread
-			// TODO
+			this.scenario.getConfig().qsim().setNumberOfThreads(1);
+			
+//			Controler controler = (Controler) event.getServices();
+//			controler.addOverridingModule(new AbstractModule() {
+//				@Override
+//				public void install() {
+//					QSimComponentsConfig components = new QSimComponentsConfig();
+//					new StandardQSimComponentConfigurator(controler.getConfig()).configure(components);
+//					bind(QSimComponentsConfig.class).toInstance(components);
+//				}
+//			});
 		}
 	}
 	
@@ -250,7 +263,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
 
 							leg.setRoute((Route) leg.getAttributes().getAttribute("drtRoute"));
-//							leg.setRoute(new DrtRoute(leg.getRoute().getStartLinkId(), leg.getRoute().getEndLinkId()));
 							leg.getAttributes().removeAttribute("drtRoute");					
 							modifiedLegsCounter++;
 						}
