@@ -164,24 +164,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		
 		if (teleportDrtUsers) {
 			this.scenario.getConfig().qsim().setNumberOfThreads(this.drtSpeedUpConfigGroup.getNumberOfThreadsForMobsimDuringSpeedUp());
-			
-//			Controler controler = (Controler) event.getServices();
-//			controler.configureQSimComponents(components -> {	
-//			});
-			
 		} else {
-			// use one thread
 			this.scenario.getConfig().qsim().setNumberOfThreads(1);
-			
-//			Controler controler = (Controler) event.getServices();
-//			controler.addOverridingModule(new AbstractModule() {
-//				@Override
-//				public void install() {
-//					QSimComponentsConfig components = new QSimComponentsConfig();
-//					new StandardQSimComponentConfigurator(controler.getConfig()).configure(components);
-//					bind(QSimComponentsConfig.class).toInstance(components);
-//				}
-//			});
 		}
 	}
 	
