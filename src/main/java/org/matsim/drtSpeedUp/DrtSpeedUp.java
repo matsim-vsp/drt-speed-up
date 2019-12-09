@@ -60,6 +60,7 @@ import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.controler.listener.StartupListener;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 
 import com.google.inject.Inject;
@@ -207,7 +208,12 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 							
 							leg.getAttributes().putAttribute("drtRoute", leg.getRoute());
 							
+							String routingMode = TripStructureUtils.getRoutingMode(leg);
+							
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode() + "_teleportation");
+							
+							// set also routing mode (we don't replan here anyway, but need to keep it)
+							TripStructureUtils.setRoutingMode(leg, routingMode);
 							
 							Link startLink = this.scenario.getNetwork().getLinks().get(leg.getRoute().getStartLinkId());
 							Link endLink = this.scenario.getNetwork().getLinks().get(leg.getRoute().getEndLinkId());
@@ -244,7 +250,12 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 					if (pE instanceof Leg) {
 						Leg leg = (Leg) pE;
 						if (leg.getMode().equals(this.drtSpeedUpConfigGroup.getMode() + "_teleportation")) {
+							String routingMode = TripStructureUtils.getRoutingMode(leg);
+							
 							leg.setMode(this.drtSpeedUpConfigGroup.getMode());
+							
+							// set also routing mode, setMode overwrote it with null
+							TripStructureUtils.setRoutingMode(leg, routingMode);
 
 							leg.setRoute((Route) leg.getAttributes().getAttribute("drtRoute"));
 							leg.getAttributes().removeAttribute("drtRoute");					
