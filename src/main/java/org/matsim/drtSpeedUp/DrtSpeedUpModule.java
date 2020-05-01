@@ -40,26 +40,32 @@ public class DrtSpeedUpModule extends AbstractModule {
 	@Override
 	public void install() {
 
-		DrtSpeedUp speedUp = new DrtSpeedUp(drtSpeedUpConfigGroup.getMode());
-		
-		this.addControlerListenerBinding().toInstance(speedUp);
-		this.addEventHandlerBinding().toInstance(speedUp);
+		for (String mode : drtSpeedUpConfigGroup.getModes().split(",")) {
+			DrtSpeedUp speedUp = new DrtSpeedUp(mode);
+			
+			this.addControlerListenerBinding().toInstance(speedUp);
+			this.addEventHandlerBinding().toInstance(speedUp);
+		}
 	}
 
-	public static void adjustConfig(Config config) {
-		String mode = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class).getMode();
+	public static void addTeleportedDrtMode(Config config) {
+		String modes = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class).getModes();
 				
-		log.info("Adding scoring parameters for mode " + mode + "...");
-				
-		ModeParams originalScoringParams = config.planCalcScore().getModes().get(mode);
-		ModeParams scoringParamsFakeMode = new ModeParams(mode + "_teleportation");
-		scoringParamsFakeMode.setConstant(originalScoringParams.getConstant());
-		scoringParamsFakeMode.setDailyMonetaryConstant(originalScoringParams.getDailyMonetaryConstant());
-		scoringParamsFakeMode.setDailyUtilityConstant(originalScoringParams.getDailyUtilityConstant());
-		scoringParamsFakeMode.setMarginalUtilityOfDistance(originalScoringParams.getMarginalUtilityOfDistance());
-		scoringParamsFakeMode.setMarginalUtilityOfTraveling(originalScoringParams.getMarginalUtilityOfTraveling());
-		scoringParamsFakeMode.setMonetaryDistanceRate(originalScoringParams.getMonetaryDistanceRate());
-		config.planCalcScore().getScoringParametersPerSubpopulation().values().forEach(k -> k.addModeParams(scoringParamsFakeMode));
+		for (String mode : modes.split(",")) {
+			log.info("Adding scoring parameters for mode " + mode + "...");
+			
+			ModeParams originalScoringParams = config.planCalcScore().getModes().get(mode);
+			if (originalScoringParams == null) throw new RuntimeException("No scoring parameters for mode " + mode + ". Aborting...");
+			
+			ModeParams scoringParamsFakeMode = new ModeParams(mode + "_teleportation");
+			scoringParamsFakeMode.setConstant(originalScoringParams.getConstant());
+			scoringParamsFakeMode.setDailyMonetaryConstant(originalScoringParams.getDailyMonetaryConstant());
+			scoringParamsFakeMode.setDailyUtilityConstant(originalScoringParams.getDailyUtilityConstant());
+			scoringParamsFakeMode.setMarginalUtilityOfDistance(originalScoringParams.getMarginalUtilityOfDistance());
+			scoringParamsFakeMode.setMarginalUtilityOfTraveling(originalScoringParams.getMarginalUtilityOfTraveling());
+			scoringParamsFakeMode.setMonetaryDistanceRate(originalScoringParams.getMonetaryDistanceRate());
+			config.planCalcScore().getScoringParametersPerSubpopulation().values().forEach(k -> k.addModeParams(scoringParamsFakeMode));
+		}
 	}
 
 }
