@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.matsim-vsp</groupId>
 	<artifactId>drt-speed-up</artifactId>
-	<version>v0.0.3-SNAPSHOT</version>
+	<version>v0.0.3</version>
 
 	<name>DRT Speed-up</name>
 	<description>DRT Speed-up</description>
