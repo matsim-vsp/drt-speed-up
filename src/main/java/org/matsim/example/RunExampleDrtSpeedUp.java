@@ -47,7 +47,7 @@ public class RunExampleDrtSpeedUp {
 	public static void main(String[] args) {
 		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtFaresConfigGroup(), new DrtSpeedUpConfigGroup());
 		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
-		DrtSpeedUpModule.adjustConfig(config);
+		DrtSpeedUpModule.addTeleportedDrtMode(config);
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();

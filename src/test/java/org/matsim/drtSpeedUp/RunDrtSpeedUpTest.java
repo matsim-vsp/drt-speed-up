@@ -47,7 +47,7 @@ public class RunDrtSpeedUpTest {
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 		
 		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
-		DrtSpeedUpModule.adjustConfig(config);
+		DrtSpeedUpModule.addTeleportedDrtMode(config);
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
@@ -63,11 +63,8 @@ public class RunDrtSpeedUpTest {
 		
 		controler.run();
 		
-		Assert.assertEquals("Wrong score.", -68.67967143801974, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(0), MatsimTestUtils.EPSILON);
-		Assert.assertEquals("Wrong score.", -51.361656180215135, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(5), MatsimTestUtils.EPSILON);
-		Assert.assertEquals("Wrong score.", -59.45541533485486, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(10), MatsimTestUtils.EPSILON);
-
-	
-	}
-	
+		Assert.assertEquals("Wrong score.", -68.68896714259088, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(0), MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong score.", -51.37003061421828, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(5), MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong score.", -59.46454120339186, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(10), MatsimTestUtils.EPSILON);
+	}	
 }

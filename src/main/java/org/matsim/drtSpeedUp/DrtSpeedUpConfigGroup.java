@@ -29,7 +29,7 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	public static final String GROUP_NAME = "drtSpeedUp" ;
 
-	private static final String MODE = "mode";
+	private static final String MODES = "modes";
 	private static final String SWITCH_OFF_FRACTION_ITERATION = "fractionOfIterationsSwitchOff";
 	private static final String SWITCH_ON_FRACTION_ITERATION = "fractionOfIterationSwitchOn";
 	private static final String DETAILED_ITERATION_INTERVAL = "intervalDetailedIteration";
@@ -39,20 +39,20 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 		super(GROUP_NAME);
 	}
 	
-	private String mode = "drt";
+	private String modes = "drt";
 	private double fractionOfIterationsSwitchOff = 0.6;
 	private double fractionOfIterationSwitchOn = 0.01;
 	private int intervalDetailedIteration = 10;
 	private int numberOfThreadsForMobsimDuringSpeedUp = 1;
 
-	@StringGetter( MODE )
-	public String getMode() {
-		return mode;
+	@StringGetter( MODES )
+	public String getModes() {
+		return modes;
 	}
 	
-	@StringSetter( MODE )
-	public void setMode(String mode) {
-		this.mode = mode;
+	@StringSetter( MODES )
+	public void setModes(String modes) {
+		this.modes = modes;
 	}
 	
 	@StringGetter( SWITCH_OFF_FRACTION_ITERATION )
