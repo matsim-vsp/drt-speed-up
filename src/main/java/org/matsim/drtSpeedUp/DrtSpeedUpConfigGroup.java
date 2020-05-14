@@ -34,6 +34,9 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private static final String SWITCH_ON_FRACTION_ITERATION = "fractionOfIterationSwitchOn";
 	private static final String DETAILED_ITERATION_INTERVAL = "intervalDetailedIteration";
 	private static final String NUMBER_OF_THREADS_FOR_MOBSIM_DURING_SPEED_UP = "numberOfThreadsForMobsimDuringSpeedUp";
+	private static final String INITIAL_WAITING_TIME = "initialWaitingTime";
+	private static final String INITIAL_IN_VEHICLE_BEELINE_SPEED = "initialInVehicleBeelineSpeed";
+	private static final String INITIAL_BEELINE_FACTOR_DRT_FARE = "initialBeelineFactorForDrtFare";
 
 	public DrtSpeedUpConfigGroup() {
 		super(GROUP_NAME);
@@ -44,6 +47,10 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private double fractionOfIterationSwitchOn = 0.01;
 	private int intervalDetailedIteration = 10;
 	private int numberOfThreadsForMobsimDuringSpeedUp = 1;
+	
+	private double initialWaitingTime = 300.;
+	private double initialInVehicleBeelineSpeed = 5.5555556;
+	private double initialBeelineFactorForDrtFare = 1.3;
 
 	@StringGetter( MODES )
 	public String getModes() {
@@ -93,6 +100,36 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter( NUMBER_OF_THREADS_FOR_MOBSIM_DURING_SPEED_UP )
 	public void setNumberOfThreadsForMobsimDuringSpeedUp(int numberOfThreadsForMobsimDuringSpeedUp) {
 		this.numberOfThreadsForMobsimDuringSpeedUp = numberOfThreadsForMobsimDuringSpeedUp;
+	}
+
+	@StringGetter( INITIAL_WAITING_TIME )
+	public double getInitialWaitingTime() {
+		return initialWaitingTime;
+	}
+
+	@StringSetter( INITIAL_WAITING_TIME )
+	public void setInitialWaitingTime(double initialWaitingTime) {
+		this.initialWaitingTime = initialWaitingTime;
+	}
+
+	@StringGetter( INITIAL_IN_VEHICLE_BEELINE_SPEED )
+	public double getInitialInVehicleBeelineSpeed() {
+		return initialInVehicleBeelineSpeed;
+	}
+
+	@StringSetter( INITIAL_IN_VEHICLE_BEELINE_SPEED )
+	public void setInitialInVehicleBeelineSpeed(double initialInVehicleBeelineSpeed) {
+		this.initialInVehicleBeelineSpeed = initialInVehicleBeelineSpeed;
+	}
+
+	@StringGetter( INITIAL_BEELINE_FACTOR_DRT_FARE )
+	public double getInitialBeelineFactorForDrtFare() {
+		return initialBeelineFactorForDrtFare;
+	}
+
+	@StringSetter( INITIAL_BEELINE_FACTOR_DRT_FARE )
+	public void setInitialBeelineFactorForDrtFare(double initialBeelineFactorForDrtFare) {
+		this.initialBeelineFactorForDrtFare = initialBeelineFactorForDrtFare;
 	}
 			
 }
