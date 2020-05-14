@@ -302,7 +302,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				double fare = 0.;
 				if (!dailyFeeCharged.contains(event.getPersonId())) {
 					dailyFeeCharged.add(event.getPersonId());
-	                events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -drtFareCfg.getDailySubscriptionFee(), "drtFare", mode));
+	                events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -drtFareCfg.getDailySubscriptionFee()));
 	            }
 				fare += drtFareCfg.getBasefare();
 				fare += drtFareCfg.getDistanceFare_m() * this.currentBeelineFactorForDrtFare * beeline;
@@ -310,7 +310,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				double inVehicleTime = travelTime - this.currentAvgWaitingTime;
 				fare += drtFareCfg.getTimeFare_h() * inVehicleTime / 3600.;
 				if (fare < drtFareCfg.getMinFarePerTrip()) fare = drtFareCfg.getMinFarePerTrip();
-	            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare, "drtFare", mode));			
+	            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare));			
 			}
 			
 			this.person2drtDepLinkId.remove(event.getPersonId());
