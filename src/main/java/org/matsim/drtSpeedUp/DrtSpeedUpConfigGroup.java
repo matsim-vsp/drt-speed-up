@@ -43,14 +43,14 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	}
 	
 	private String modes = "drt";
-	private double fractionOfIterationsSwitchOff = 0.6;
-	private double fractionOfIterationSwitchOn = 0.01;
+	private double fractionOfIterationsSwitchOff = 0.99;
+	private double fractionOfIterationSwitchOn = 0.;
 	private int intervalDetailedIteration = 10;
-	private int numberOfThreadsForMobsimDuringSpeedUp = 1;
+	private int numberOfThreadsForMobsimDuringSpeedUp = 4;
 	
-	private double initialWaitingTime = 300.;
-	private double initialInVehicleBeelineSpeed = 5.5555556;
-	private double initialBeelineFactorForDrtFare = 1.3;
+	private double initialWaitingTime = 900.;
+	private double initialInVehicleBeelineSpeed = 4.16667;
+	private double initialBeelineFactorForDrtFare = 1.5;
 
 	@StringGetter( MODES )
 	public String getModes() {
