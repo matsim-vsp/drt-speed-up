@@ -37,6 +37,7 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private static final String INITIAL_WAITING_TIME = "initialWaitingTime";
 	private static final String INITIAL_IN_VEHICLE_BEELINE_SPEED = "initialInVehicleBeelineSpeed";
 	private static final String INITIAL_BEELINE_FACTOR_DRT_FARE = "initialBeelineFactorForDrtFare";
+	private static final String FIRST_SIMULATED_DRT_ITERATION_TO_REPLACE_INITIAL_DRT_PERFORMANCE_PARAMS = "firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams";
 
 	public DrtSpeedUpConfigGroup() {
 		super(GROUP_NAME);
@@ -51,6 +52,7 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private double initialWaitingTime = 900.;
 	private double initialInVehicleBeelineSpeed = 4.16667;
 	private double initialBeelineFactorForDrtFare = 1.5;
+	private int firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams = 0;
 
 	@StringGetter( MODES )
 	public String getModes() {
@@ -130,6 +132,16 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter( INITIAL_BEELINE_FACTOR_DRT_FARE )
 	public void setInitialBeelineFactorForDrtFare(double initialBeelineFactorForDrtFare) {
 		this.initialBeelineFactorForDrtFare = initialBeelineFactorForDrtFare;
+	}
+
+	@StringGetter( FIRST_SIMULATED_DRT_ITERATION_TO_REPLACE_INITIAL_DRT_PERFORMANCE_PARAMS )
+	public int getFirstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams() {
+		return firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams;
+	}
+
+	@StringSetter( FIRST_SIMULATED_DRT_ITERATION_TO_REPLACE_INITIAL_DRT_PERFORMANCE_PARAMS )
+	public void setFirstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams(int firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams) {
+		this.firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams = firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams;
 	}
 			
 }
