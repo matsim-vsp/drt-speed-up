@@ -175,7 +175,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	
 	@Override
 	public void notifyIterationEnds(IterationEndsEvent event) {
-		if (teleportDrtUsers == false) {
+		if (teleportDrtUsers == false && event.getIteration() >= drtSpeedUpConfigGroup.getFirstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams()) {
 			// update statstics
 			double currentAvgInVehicleBeelineSpeed = beelineInVehicleSpeeds.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialInVehicleBeelineSpeed());
 			log.info("Setting teleported mode speed for " + mode + "_teleportation to the average beeline speed: " + currentAvgInVehicleBeelineSpeed + " (previous value: " + this.currentAvgInVehicleBeelineSpeed + ")");
