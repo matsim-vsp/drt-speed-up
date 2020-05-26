@@ -10,3 +10,5 @@ An attempt to speed up a drt simulation with mode choice.
 6. update the drt related statistics after some iterations and run a 'normal' drt simulation without modifying the plans.
 Goto (1) and repeat the cycle several times
 7. Switch of the drt speed up mechanism and run a normal drt simulation for the final iterations
+
+Warning: If drt rebalancing is used with drt-speed-up, rebalancing will not work properly because per default the expected drt demand is calculated based on the previous iteration's "drt" mode PersonDepartureEvents and mode "drt teleportation" is not taken into account. We are currently working on an alternative rebalancing approach.
