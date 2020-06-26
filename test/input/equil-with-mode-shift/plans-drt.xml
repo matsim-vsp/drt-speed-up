@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<!DOCTYPE plans SYSTEM "http://www.matsim.org/files/dtd/plans_v4.dtd">
+<plans xml:lang="de-CH">
+<person id="1">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="2">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="3">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="4">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="5">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="6">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="7">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="8">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="9">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+<person id="10">
+	<plan>
+		<act type="h" x="-25000" y="0" link="1" end_time="06:00" />
+		<leg mode="drt1">
+		</leg>
+		<act type="w" x="10000" y="0" link="20" />
+	</plan>
+</person>
+
+</plans>
