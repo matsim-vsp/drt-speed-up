@@ -13,8 +13,8 @@
 	</module>
 	<module name="drtSpeedUp" >
 		<param name="fractionOfIterationSwitchOn" value="0.01" />
-		<param name="fractionOfIterationsSwitchOff" value="0.6" />
-		<param name="intervalDetailedIteration" value="3" />
+		<param name="fractionOfIterationsSwitchOff" value="1.0" />
+		<param name="intervalDetailedIteration" value="4" />
 		<param name="modes" value="drt,drt1" />
 		<param name="initialWaitingTime" value="300." />
 		<param name="initialInVehicleBeelineSpeed" value="5.5555556" />

@@ -48,6 +48,7 @@ import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
 import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
+import org.matsim.contrib.dvrp.fleet.FleetSpecification;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.events.BeforeMobsimEvent;
@@ -65,8 +66,6 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup.WaitingTimeUpdateDuringSpeedUp;
-
-import com.google.inject.Inject;
 
 /**
 * @author ikaddoura
@@ -96,13 +95,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	private boolean teleportDrtUsers = false;
     private final Map<Id<Person>, DrtRequestSubmittedEvent> lastRequestSubmission = new HashMap<>();
     
-	@Inject
 	private Scenario scenario;
-	
-	@Inject
 	private EventsManager events;
-	
-	@Inject
 	private DrtSpeedUpConfigGroup drtSpeedUpConfigGroup;
 
 	private int drtTeleportationTripCounter;
@@ -110,8 +104,20 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	
 	private final String mode;
 
-	public DrtSpeedUp(String mode) {	
+	private FleetSpecification fleetSpecification;
+
+	private boolean waitingTimeAdjustedDuringSpeedUp;
+
+	public DrtSpeedUp(String mode,
+			DrtSpeedUpConfigGroup drtSpeedUpConfigGroup,
+			EventsManager events,
+			Scenario scenario,
+			FleetSpecification fleetSpecification) {	
 		this.mode = mode;
+		this.drtSpeedUpConfigGroup = drtSpeedUpConfigGroup;
+		this.events = events;
+		this.scenario = scenario;
+		this.fleetSpecification = fleetSpecification;
 	}
 
 	@Override
@@ -154,17 +160,17 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				|| event.getIteration() >= this.drtSpeedUpConfigGroup.getFractionOfIterationsSwitchOff() * this.scenario.getConfig().controler().getLastIteration()) {	
 			// run the detailed drt simulation
 			teleportDrtUsers = false;
-			log.info("Drt speed up disabled. Simulating drt in iteration " + event.getIteration());
+			log.info("Drt speed up disabled. Simulating " + mode + " in iteration " + event.getIteration());
 
 		} else {
 			if (event.getIteration() % this.drtSpeedUpConfigGroup.getIntervalDetailedIteration() == 0) {
 				// run the detailed drt simulation
 				teleportDrtUsers = false;
-				log.info("Simulating drt in iteration " + event.getIteration());
+				log.info("Simulating " + mode + " in iteration " + event.getIteration());
 			} else {
 				// teleport drt users
 				teleportDrtUsers = true;
-				log.info("Teleporting drt users in iteration " + event.getIteration() + "."
+				log.info("Teleporting " + mode + " users in iteration " + event.getIteration() + "."
 						+ " Current teleported mode speed: " +  this.currentAvgInVehicleBeelineSpeed + "."
 						+ " Current waiting time: " +  this.currentAvgWaitingTime + "."
 						+ " Current unshared ride beeline distance factor for fare calculation: " + this.currentBeelineFactorForDrtFare + ".");
@@ -198,10 +204,14 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			double averageWaitingTime = waitingTimes.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialWaitingTime());			
 			log.info("Setting waiting time for " + mode + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
 			this.currentAvgWaitingTime = averageWaitingTime;
+			waitingTimeAdjustedDuringSpeedUp = false;
 			
 			if (drtSpeedUpConfigGroup.getWaitingTimeUpdateDuringSpeedUp() == WaitingTimeUpdateDuringSpeedUp.LinearRegression) {
 				// store some additional statistics
-				double fleetSize = 1.0; // TODO: get the fleet size via the fleetSpecification for this specific drt mode!
+				double fleetSize = fleetSpecification.getVehicleSpecifications().size();
+				if (fleetSize < 1.) {
+					throw new RuntimeException("Number of vehicles is less than 1 for drt mode "  + this.mode + ". Aborting..."); 
+				}
 				double ridesPerVehicle = this.drtTripCounter / fleetSize;
 				ridesPerVehicle2avgWaitingTime.add(new Tuple<Double, Double>(ridesPerVehicle, currentAvgWaitingTime));
 			}
@@ -217,7 +227,11 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				}
 
 				log.info("Current data points for " + mode + ": "+ ridesPerVehicle2avgWaitingTime.toString());
-				double currentFleetSize = 1.; // TODO: Get fleet size from fleetSpecification!
+				double currentFleetSize = fleetSpecification.getVehicleSpecifications().size();
+				if (currentFleetSize < 1.) {
+					throw new RuntimeException("Number of vehicles is less than 1 for drt mode "  + this.mode + ". Aborting..."); 
+				}
+				log.info("Current fleet size for " + mode + ": "+ currentFleetSize);
 				double predictedWaitingTime = regression.predict(this.drtTeleportationTripCounter / currentFleetSize);
 				log.info("Predicted average waiting time for " + mode + ": " + predictedWaitingTime);
 
@@ -228,6 +242,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				} else {
 					log.info("Setting waiting time for " + mode + "_teleportation to: " + predictedWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
 					this.currentAvgWaitingTime = predictedWaitingTime;
+					this.waitingTimeAdjustedDuringSpeedUp = true;
 				}				
 			}
 		}
@@ -267,6 +282,9 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 							double dist = CoordUtils.calcEuclideanDistance( fromActCoord, toActCoord );
 							Route route = this.scenario.getPopulation().getFactory().getRouteFactories().createRoute(Route.class, startLink.getId(), endLink.getId());
 							int travTime = (int) ( this.currentAvgWaitingTime + (dist / this.currentAvgInVehicleBeelineSpeed) );
+							if (waitingTimeAdjustedDuringSpeedUp) {
+								log.info("WaitingTimeAdjustedDuringSpeedUp");
+							}
 							route.setTravelTime(travTime);
 							route.setDistance(dist);
 							leg.setRoute(route);

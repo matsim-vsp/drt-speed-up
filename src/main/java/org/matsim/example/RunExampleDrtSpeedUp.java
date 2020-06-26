@@ -36,7 +36,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.population.routes.RouteFactories;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup;
-import org.matsim.drtSpeedUp.DrtSpeedUpModule;
+import org.matsim.drtSpeedUp.MultiModeDrtSpeedUpModule;
 
 /**
 * @author ikaddoura
@@ -47,7 +47,7 @@ public class RunExampleDrtSpeedUp {
 	public static void main(String[] args) {
 		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtFaresConfigGroup(), new DrtSpeedUpConfigGroup());
 		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
-		DrtSpeedUpModule.addTeleportedDrtMode(config);
+		MultiModeDrtSpeedUpModule.addTeleportedDrtMode(config);
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
@@ -59,7 +59,7 @@ public class RunExampleDrtSpeedUp {
 		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));				
 		controler.addOverridingModule(new DrtFareModule());
 		
-		controler.addOverridingModule(new DrtSpeedUpModule());
+		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
 		
 		controler.run();
 	}
