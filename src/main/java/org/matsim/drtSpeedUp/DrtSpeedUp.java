@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -61,7 +62,9 @@ import org.matsim.core.controler.listener.StartupListener;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup.WaitingTimeUpdateDuringSpeedUp;
 
 import com.google.inject.Inject;
 
@@ -85,6 +88,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	private double currentBeelineFactorForDrtFare;
 	private double currentAvgWaitingTime;
 	private double currentAvgInVehicleBeelineSpeed;
+	
+	private final List<Tuple<Double, Double>> ridesPerVehicle2avgWaitingTime = new ArrayList<>();
 	
     private DrtFareConfigGroup drtFareCfg;
 	
@@ -175,6 +180,11 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	
 	@Override
 	public void notifyIterationEnds(IterationEndsEvent event) {
+		
+		// print out some statistics
+		log.info("Number of simulated " + mode + " trips: " + drtTripCounter);
+		log.info("Number of teleported " + mode + " trips: " + drtTeleportationTripCounter);
+
 		if (teleportDrtUsers == false && event.getIteration() >= drtSpeedUpConfigGroup.getFirstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams()) {
 			// update statstics
 			double currentAvgInVehicleBeelineSpeed = beelineInVehicleSpeeds.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialInVehicleBeelineSpeed());
@@ -187,12 +197,40 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			
 			double averageWaitingTime = waitingTimes.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialWaitingTime());			
 			log.info("Setting waiting time for " + mode + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
-			this.currentAvgWaitingTime = averageWaitingTime;		
+			this.currentAvgWaitingTime = averageWaitingTime;
+			
+			if (drtSpeedUpConfigGroup.getWaitingTimeUpdateDuringSpeedUp() == WaitingTimeUpdateDuringSpeedUp.LinearRegression) {
+				// store some additional statistics
+				double fleetSize = 1.0; // TODO: get the fleet size via the fleetSpecification for this specific drt mode!
+				double ridesPerVehicle = this.drtTripCounter / fleetSize;
+				ridesPerVehicle2avgWaitingTime.add(new Tuple<Double, Double>(ridesPerVehicle, currentAvgWaitingTime));
+			}
 		}
 		
-		// print out some statistics
-		log.info("Number of simulated drt trips: " + drtTripCounter);
-		log.info("Number of teleported drt trips: " + drtTeleportationTripCounter);
+		if (drtSpeedUpConfigGroup.getWaitingTimeUpdateDuringSpeedUp() == WaitingTimeUpdateDuringSpeedUp.LinearRegression) {
+			if (teleportDrtUsers == true && event.getIteration() >= drtSpeedUpConfigGroup.getFirstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams()) {
+				// update current average waiting time also during speed-up iterations
+				
+				SimpleRegression regression = new SimpleRegression();
+				for (Tuple<Double, Double> x2y : ridesPerVehicle2avgWaitingTime) {
+					regression.addData(x2y.getFirst(), x2y.getSecond());
+				}
+
+				log.info("Current data points for " + mode + ": "+ ridesPerVehicle2avgWaitingTime.toString());
+				double predictedWaitingTime = regression.predict(this.drtTeleportationTripCounter);
+				log.info("Predicted average waiting time for " + mode + ": " + predictedWaitingTime);
+
+				if (Double.isNaN(predictedWaitingTime)) {
+					log.info("Not enough data points for linear regression. Don't update the average waiting time!");
+				} else if (predictedWaitingTime <= 0.) {
+					log.info("Predicted average waiting from linear regression is negative. Don't update the average waiting time! ");
+				} else {
+					log.info("Setting waiting time for " + mode + "_teleportation to: " + predictedWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
+					this.currentAvgWaitingTime = predictedWaitingTime;
+				}				
+			}
+		}
+
 	}
 
 	@Override
