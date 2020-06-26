@@ -217,7 +217,8 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				}
 
 				log.info("Current data points for " + mode + ": "+ ridesPerVehicle2avgWaitingTime.toString());
-				double predictedWaitingTime = regression.predict(this.drtTeleportationTripCounter);
+				double currentFleetSize = 1.; // TODO: Get fleet size from fleetSpecification!
+				double predictedWaitingTime = regression.predict(this.drtTeleportationTripCounter / currentFleetSize);
 				log.info("Predicted average waiting time for " + mode + ": " + predictedWaitingTime);
 
 				if (Double.isNaN(predictedWaitingTime)) {
