@@ -106,8 +106,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 
 	private FleetSpecification fleetSpecification;
 
-	private boolean waitingTimeAdjustedDuringSpeedUp;
-
 	public DrtSpeedUp(String mode,
 			DrtSpeedUpConfigGroup drtSpeedUpConfigGroup,
 			EventsManager events,
@@ -204,7 +202,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			double averageWaitingTime = waitingTimes.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialWaitingTime());			
 			log.info("Setting waiting time for " + mode + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
 			this.currentAvgWaitingTime = averageWaitingTime;
-			waitingTimeAdjustedDuringSpeedUp = false;
 			
 			if (drtSpeedUpConfigGroup.getWaitingTimeUpdateDuringSpeedUp() == WaitingTimeUpdateDuringSpeedUp.LinearRegression) {
 				// store some additional statistics
@@ -242,7 +239,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				} else {
 					log.info("Setting waiting time for " + mode + "_teleportation to: " + predictedWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
 					this.currentAvgWaitingTime = predictedWaitingTime;
-					this.waitingTimeAdjustedDuringSpeedUp = true;
 				}				
 			}
 		}
@@ -282,9 +278,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 							double dist = CoordUtils.calcEuclideanDistance( fromActCoord, toActCoord );
 							Route route = this.scenario.getPopulation().getFactory().getRouteFactories().createRoute(Route.class, startLink.getId(), endLink.getId());
 							int travTime = (int) ( this.currentAvgWaitingTime + (dist / this.currentAvgInVehicleBeelineSpeed) );
-							if (waitingTimeAdjustedDuringSpeedUp) {
-								log.info("WaitingTimeAdjustedDuringSpeedUp");
-							}
 							route.setTravelTime(travTime);
 							route.setDistance(dist);
 							leg.setRoute(route);
