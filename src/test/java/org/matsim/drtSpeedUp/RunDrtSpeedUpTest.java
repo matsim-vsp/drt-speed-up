@@ -51,7 +51,7 @@ public class RunDrtSpeedUpTest {
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 		
 		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
-		DrtSpeedUpModule.addTeleportedDrtMode(config);
+		MultiModeDrtSpeedUpModule.addTeleportedDrtMode(config);
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
@@ -63,7 +63,7 @@ public class RunDrtSpeedUpTest {
 		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));				
 		controler.addOverridingModule(new DrtFareModule());
 		
-		controler.addOverridingModule(new DrtSpeedUpModule());
+		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
 		
 		controler.run();
 		
@@ -83,7 +83,7 @@ public class RunDrtSpeedUpTest {
 		config.planCalcScore().addModeParams(params);
 				
 		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
-		DrtSpeedUpModule.addTeleportedDrtMode(config);
+		MultiModeDrtSpeedUpModule.addTeleportedDrtMode(config);
 		
 		DrtSpeedUpConfigGroup speedUpCfg = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class);
 		speedUpCfg.setWaitingTimeUpdateDuringSpeedUp(WaitingTimeUpdateDuringSpeedUp.LinearRegression);
@@ -99,16 +99,23 @@ public class RunDrtSpeedUpTest {
 		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));				
 		controler.addOverridingModule(new DrtFareModule());
 		
-		controler.addOverridingModule(new DrtSpeedUpModule());
+		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
 		
 		controler.run();
 		
 		Assert.assertEquals("Wrong score.", -68.16039728425578, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(0), MatsimTestUtils.EPSILON);
-		Assert.assertEquals("Wrong score.", -75.83903884092979, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(4), MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong score.", -76.66818285403731, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(4), MatsimTestUtils.EPSILON);
 		
-		// in iteration 5 the average waiting time prediction is changed during a speed-up iteration based on a linear regression
+		// at the end of iteration 5 the average waiting time prediction is changed during a speed-up iteration using a linear regression approach
 		Assert.assertEquals("Wrong score.", -47.268263677218066, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(5), MatsimTestUtils.EPSILON);
 		
-		Assert.assertEquals("Wrong score.", -71.63166366412568, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(10), MatsimTestUtils.EPSILON);
+		// in iteration 6 the new average waiting time prediction should be applied and yield a different waiting time than in the iteration before
+		Assert.assertEquals("Wrong score.", -76.97530193587285, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(6), MatsimTestUtils.EPSILON);
+		
+		// at the end of iteration 6, again, the average waiting time prediction is changed during a speed-up iteration using a linear regression approach
+		// in iteration 7, again, the new average waiting time prediction should be applied and yield a different waiting time than in the iteration before
+		Assert.assertEquals("Wrong score.", -95.76009699697909, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(7), MatsimTestUtils.EPSILON);
+				
+		Assert.assertEquals("Wrong score.", -67.35810298938483, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(10), MatsimTestUtils.EPSILON);
 	}	
 }

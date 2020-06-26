@@ -2,4 +2,5 @@
 
 <vehicles>
 	<vehicle id="drt2-0" start_link="15" t_0="1.0" t_1="108000.0" capacity="1"/>
+	<vehicle id="drt2-1" start_link="15" t_0="107999.0" t_1="108000.0" capacity="1"/>
 </vehicles>
