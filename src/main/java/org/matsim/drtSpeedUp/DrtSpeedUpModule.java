@@ -19,11 +19,10 @@
 
 package org.matsim.drtSpeedUp;
 
-import org.apache.log4j.Logger;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
-import org.matsim.core.controler.AbstractModule;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.contrib.dvrp.fleet.FleetSpecification;
+import org.matsim.contrib.dvrp.run.AbstractDvrpModeModule;
+import org.matsim.core.api.experimental.events.EventsManager;
 
 import com.google.inject.Inject;
 
@@ -31,41 +30,32 @@ import com.google.inject.Inject;
 * @author ikaddoura
 */
 
-public class DrtSpeedUpModule extends AbstractModule {
-	private static final Logger log = Logger.getLogger(DrtSpeedUpModule.class);
+class DrtSpeedUpModule extends AbstractDvrpModeModule {
+	
+	private final String mode;
+	
+	protected DrtSpeedUpModule(String mode) {
+		super(mode);
+		this.mode = mode;
+	}
 	
 	@Inject
 	private DrtSpeedUpConfigGroup drtSpeedUpConfigGroup;
 
 	@Override
 	public void install() {
-
-		for (String mode : drtSpeedUpConfigGroup.getModes().split(",")) {
-			DrtSpeedUp speedUp = new DrtSpeedUp(mode);
-			
-			this.addControlerListenerBinding().toInstance(speedUp);
-			this.addEventHandlerBinding().toInstance(speedUp);
-		}
-	}
-
-	public static void addTeleportedDrtMode(Config config) {
-		String modes = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class).getModes();
-				
-		for (String mode : modes.split(",")) {
-			log.info("Adding scoring parameters for mode " + mode + "...");
-			
-			ModeParams originalScoringParams = config.planCalcScore().getModes().get(mode);
-			if (originalScoringParams == null) throw new RuntimeException("No scoring parameters for mode " + mode + ". Aborting...");
-			
-			ModeParams scoringParamsFakeMode = new ModeParams(mode + "_teleportation");
-			scoringParamsFakeMode.setConstant(originalScoringParams.getConstant());
-			scoringParamsFakeMode.setDailyMonetaryConstant(originalScoringParams.getDailyMonetaryConstant());
-			scoringParamsFakeMode.setDailyUtilityConstant(originalScoringParams.getDailyUtilityConstant());
-			scoringParamsFakeMode.setMarginalUtilityOfDistance(originalScoringParams.getMarginalUtilityOfDistance());
-			scoringParamsFakeMode.setMarginalUtilityOfTraveling(originalScoringParams.getMarginalUtilityOfTraveling());
-			scoringParamsFakeMode.setMonetaryDistanceRate(originalScoringParams.getMonetaryDistanceRate());
-			config.planCalcScore().getScoringParametersPerSubpopulation().values().forEach(k -> k.addModeParams(scoringParamsFakeMode));
-		}
+		bindModal(DrtSpeedUp.class).toProvider(modalProvider(
+				getter -> new DrtSpeedUp(mode,
+						drtSpeedUpConfigGroup,
+						getter.get(EventsManager.class),
+						getter.get(Scenario.class),
+						getter.getModal(FleetSpecification.class)))).asEagerSingleton();
+					
+		addControlerListenerBinding().toProvider(modalProvider(
+				getter -> getter.getModal(DrtSpeedUp.class)));
+		
+		addEventHandlerBinding().toProvider(modalProvider(
+				getter -> getter.getModal(DrtSpeedUp.class)));
 	}
 
 }
