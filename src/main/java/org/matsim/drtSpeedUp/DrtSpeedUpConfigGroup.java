@@ -39,7 +39,8 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private static final String INITIAL_BEELINE_FACTOR_DRT_FARE = "initialBeelineFactorForDrtFare";
 	private static final String FIRST_SIMULATED_DRT_ITERATION_TO_REPLACE_INITIAL_DRT_PERFORMANCE_PARAMS = "firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams";
 	private static final String WAITING_TIME_UPDATE_DURING_SPEED_UP = "waitingTimeUpdateDuringSpeedUp";
-	
+	private static final String MOVING_AVERAGE_SIZE = "movingAverageSize";
+
 	public DrtSpeedUpConfigGroup() {
 		super(GROUP_NAME);
 	}
@@ -55,7 +56,8 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	private double initialBeelineFactorForDrtFare = 1.5;
 	private int firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams = 0;
 	private WaitingTimeUpdateDuringSpeedUp waitingTimeUpdateDuringSpeedUp = WaitingTimeUpdateDuringSpeedUp.Disabled;
-	
+	private int movingAverageSize = 1;
+
 	public enum WaitingTimeUpdateDuringSpeedUp {
 		Disabled, LinearRegression
 	}
@@ -158,6 +160,16 @@ public class DrtSpeedUpConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter( WAITING_TIME_UPDATE_DURING_SPEED_UP )
 	public void setWaitingTimeUpdateDuringSpeedUp(WaitingTimeUpdateDuringSpeedUp waitingTimeUpdateDuringSpeedUp) {
 		this.waitingTimeUpdateDuringSpeedUp = waitingTimeUpdateDuringSpeedUp;
+	}
+
+	@StringGetter( MOVING_AVERAGE_SIZE )
+	public int getMovingAverageSize() {
+		return movingAverageSize;
+	}
+
+	@StringSetter( MOVING_AVERAGE_SIZE )
+	public void setMovingAverageSize(int movingAverageSize) {
+		this.movingAverageSize = movingAverageSize;
 	}
 			
 }

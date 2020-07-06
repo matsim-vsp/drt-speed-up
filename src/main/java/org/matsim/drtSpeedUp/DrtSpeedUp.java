@@ -89,6 +89,10 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	private double currentAvgInVehicleBeelineSpeed;
 	
 	private final List<Tuple<Double, Double>> ridesPerVehicle2avgWaitingTime = new ArrayList<>();
+	private final List<Double> averageWaitingTimes = new ArrayList<>();
+	private final List<Double> averageBeelineFactorsForDrtFare = new ArrayList<>();
+	private final List<Double> averageInVehicleBeelineSpeeds = new ArrayList<>();
+
 	
     private DrtFareConfigGroup drtFareCfg;
 	
@@ -190,18 +194,43 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		log.info("Number of teleported " + mode + " trips: " + drtTeleportationTripCounter);
 
 		if (teleportDrtUsers == false && event.getIteration() >= drtSpeedUpConfigGroup.getFirstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams()) {
+			
 			// update statstics
-			double currentAvgInVehicleBeelineSpeed = beelineInVehicleSpeeds.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialInVehicleBeelineSpeed());
-			log.info("Setting teleported mode speed for " + mode + "_teleportation to the average beeline speed: " + currentAvgInVehicleBeelineSpeed + " (previous value: " + this.currentAvgInVehicleBeelineSpeed + ")");
-			this.currentAvgInVehicleBeelineSpeed = currentAvgInVehicleBeelineSpeed;
-			
+			double avgerageInVehicleBeelineSpeed = beelineInVehicleSpeeds.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialInVehicleBeelineSpeed());
 			double averageBeelineFactor = beelineFactors.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialBeelineFactorForDrtFare());			
-			log.info("Setting unshared ride beeline distance factor for fare calculation of " + mode + "_teleportation to: " + averageBeelineFactor + " (previous value: " + this.currentBeelineFactorForDrtFare + ")");
-			this.currentBeelineFactorForDrtFare = averageBeelineFactor;	
-			
 			double averageWaitingTime = waitingTimes.stream().mapToDouble(val -> val).average().orElse(drtSpeedUpConfigGroup.getInitialWaitingTime());			
-			log.info("Setting waiting time for " + mode + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
-			this.currentAvgWaitingTime = averageWaitingTime;
+
+			if (drtSpeedUpConfigGroup.getMovingAverageSize() < 1) {
+				throw new RuntimeException("Moving average size below 1 not allowed. Aborting...");
+			} else if (drtSpeedUpConfigGroup.getMovingAverageSize() == 1) {
+				log.info("Setting teleported mode speed for " + mode + "_teleportation to the average beeline speed: " + avgerageInVehicleBeelineSpeed + " (previous value: " + this.currentAvgInVehicleBeelineSpeed + ")");
+				this.currentAvgInVehicleBeelineSpeed = avgerageInVehicleBeelineSpeed;
+				
+				log.info("Setting unshared ride beeline distance factor for fare calculation of " + mode + "_teleportation to: " + averageBeelineFactor + " (previous value: " + this.currentBeelineFactorForDrtFare + ")");
+				this.currentBeelineFactorForDrtFare = averageBeelineFactor;	
+				
+				log.info("Setting waiting time for " + mode + "_teleportation to: " + averageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
+				this.currentAvgWaitingTime = averageWaitingTime;
+
+			} else {
+				
+				// store additional information
+				this.averageWaitingTimes.add(averageWaitingTime);
+				this.averageInVehicleBeelineSpeeds.add(avgerageInVehicleBeelineSpeed);
+				this.averageBeelineFactorsForDrtFare.add(averageBeelineFactor);
+				
+				double movingAverageWaitingTime = computeMovingAverage(drtSpeedUpConfigGroup.getMovingAverageSize(), this.averageWaitingTimes);
+				log.info("Setting waiting time for " + mode + "_teleportation to: " + movingAverageWaitingTime + " (previous value: " + this.currentAvgWaitingTime + ")");
+				this.currentAvgWaitingTime = movingAverageWaitingTime;
+				
+				double movingAverageInVehicleBeelineSpeed = computeMovingAverage(drtSpeedUpConfigGroup.getMovingAverageSize(), this.averageInVehicleBeelineSpeeds);
+				log.info("Setting waiting time for " + mode + "_teleportation to: " + movingAverageInVehicleBeelineSpeed + " (previous value: " + this.currentAvgInVehicleBeelineSpeed + ")");
+				this.currentAvgInVehicleBeelineSpeed = movingAverageInVehicleBeelineSpeed;
+				
+				double movingAverageBeelineFactorForDrtFare = computeMovingAverage(drtSpeedUpConfigGroup.getMovingAverageSize(), this.averageBeelineFactorsForDrtFare);
+				log.info("Setting waiting time for " + mode + "_teleportation to: " + movingAverageBeelineFactorForDrtFare + " (previous value: " + this.currentBeelineFactorForDrtFare + ")");
+				this.currentBeelineFactorForDrtFare = movingAverageBeelineFactorForDrtFare;				
+			}
 			
 			if (drtSpeedUpConfigGroup.getWaitingTimeUpdateDuringSpeedUp() == WaitingTimeUpdateDuringSpeedUp.LinearRegression) {
 				// store some additional statistics
@@ -242,7 +271,18 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 				}				
 			}
 		}
+	}
 
+	static double computeMovingAverage(int movingAverageSize, List<Double> values) {		
+		int startIndex = values.size() - movingAverageSize;
+		int counter = 0;
+		double sum = 0.;		
+		if (startIndex < 0) startIndex = 0;
+		for (int i = startIndex; i <= (values.size() - 1); i++) {
+			counter++;
+			sum+=values.get(i);
+		}	
+		return sum / (double) counter;
 	}
 
 	@Override

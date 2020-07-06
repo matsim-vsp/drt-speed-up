@@ -117,5 +117,36 @@ public class RunDrtSpeedUpTest {
 		Assert.assertEquals("Wrong score.", -95.76009699697909, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(7), MatsimTestUtils.EPSILON);
 				
 		Assert.assertEquals("Wrong score.", -67.35810298938483, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(10), MatsimTestUtils.EPSILON);
+	}
+	
+	@Test
+	public final void test4withMovingAverage() {
+		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtFaresConfigGroup(), new DrtSpeedUpConfigGroup());
+		config.controler().setRunId("test2");
+		config.controler().setOutputDirectory(utils.getOutputDirectory());
+		
+		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
+		MultiModeDrtSpeedUpModule.addTeleportedDrtMode(config);
+		
+		DrtSpeedUpConfigGroup speedUpCfg = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class);
+		speedUpCfg.setMovingAverageSize(2);
+		
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
+		routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+		
+		Controler controler = new Controler(scenario);		
+		controler.addOverridingModule(new MultiModeDrtModule());
+		controler.addOverridingModule(new DvrpModule());
+		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));				
+		controler.addOverridingModule(new DrtFareModule());
+		
+		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
+		
+		controler.run();
+		
+		Assert.assertEquals("Wrong score.", -68.68896714259088, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(0), MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong score.", -59.76924651476288	, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(5), MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong score.", -59.46454120339186, controler.getScoreStats().getScoreHistory().get(ScoreItem.executed).get(10), MatsimTestUtils.EPSILON);
 	}	
 }
