@@ -20,6 +20,8 @@
 package org.matsim.drtSpeedUp;
 
 import org.apache.log4j.Logger;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
@@ -47,6 +49,7 @@ public class MultiModeDrtSpeedUpModule extends AbstractModule {
 	
 	public static void addTeleportedDrtMode(Config config) {
 		String modes = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class).getModes();
+		MultiModeDrtConfigGroup multiModeDrtConfig = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 				
 		for (String mode : modes.split(",")) {
 			log.info("Adding scoring parameters for mode " + mode + "...");
@@ -62,6 +65,13 @@ public class MultiModeDrtSpeedUpModule extends AbstractModule {
 			scoringParamsFakeMode.setMarginalUtilityOfTraveling(originalScoringParams.getMarginalUtilityOfTraveling());
 			scoringParamsFakeMode.setMonetaryDistanceRate(originalScoringParams.getMonetaryDistanceRate());
 			config.planCalcScore().getScoringParametersPerSubpopulation().values().forEach(k -> k.addModeParams(scoringParamsFakeMode));
+
+			// set speed up mode (used for drt speed up mode demand aggregation for rebalancing)
+			for (DrtConfigGroup drtConfig: multiModeDrtConfig.getModalElements()) {
+				if (drtConfig.getMode().equals(mode)) {
+					drtConfig.setDrtSpeedUpMode(mode + "_teleportation");
+				}
+			}
 		}
 	}
 }
