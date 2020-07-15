@@ -142,6 +142,7 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	
 	@Override
 	public void notifyStartup(StartupEvent event) {
+		originalNumberOfQsimThreads = this.drtSpeedUpConfigGroup.getNumberOfThreadsForMobsimDuringSpeedUp();
 		
 		for (DrtFareConfigGroup drtFareCfg : DrtFaresConfigGroup.get(scenario.getConfig()).getDrtFareConfigGroups()) {
 			if (drtFareCfg.getMode().equals(mode)) {
