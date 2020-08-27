@@ -25,6 +25,7 @@ import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
+import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 
 import com.google.inject.Inject;
@@ -40,10 +41,13 @@ public class MultiModeDrtSpeedUpModule extends AbstractModule {
 	@Inject
 	private DrtSpeedUpConfigGroup drtSpeedUpConfigGroup;
 
+	@Inject
+	private QSimConfigGroup qSimConfigGroup;
+
 	@Override
 	public void install() {	
 		for (String mode : drtSpeedUpConfigGroup.getModes().split(",")) {
-			install(new DrtSpeedUpModule(mode));
+			install(new DrtSpeedUpModule(mode, qSimConfigGroup.getNumberOfThreads()));
 		}
 	}
 	

@@ -33,10 +33,12 @@ import com.google.inject.Inject;
 class DrtSpeedUpModule extends AbstractDvrpModeModule {
 	
 	private final String mode;
+	private final int numberOfQsimThreads;
 	
-	protected DrtSpeedUpModule(String mode) {
+	protected DrtSpeedUpModule(String mode, int numberOfQsimThreads) {
 		super(mode);
 		this.mode = mode;
+		this.numberOfQsimThreads = numberOfQsimThreads;
 	}
 	
 	@Inject
@@ -47,6 +49,7 @@ class DrtSpeedUpModule extends AbstractDvrpModeModule {
 		bindModal(DrtSpeedUp.class).toProvider(modalProvider(
 				getter -> new DrtSpeedUp(mode,
 						drtSpeedUpConfigGroup,
+						numberOfQsimThreads,
 						getter.get(EventsManager.class),
 						getter.get(Scenario.class),
 						getter.getModal(FleetSpecification.class)))).asEagerSingleton();

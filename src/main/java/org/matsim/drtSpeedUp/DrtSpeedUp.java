@@ -108,17 +108,19 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	
 	private final String mode;
 
-	private int originalNumberOfQsimThreads;
+	private final int originalNumberOfQsimThreads;
 
 	private FleetSpecification fleetSpecification;
 
 	public DrtSpeedUp(String mode,
 			DrtSpeedUpConfigGroup drtSpeedUpConfigGroup,
+			int numberOfQsimThreads,
 			EventsManager events,
 			Scenario scenario,
 			FleetSpecification fleetSpecification) {	
 		this.mode = mode;
 		this.drtSpeedUpConfigGroup = drtSpeedUpConfigGroup;
+		this.originalNumberOfQsimThreads = numberOfQsimThreads;
 		this.events = events;
 		this.scenario = scenario;
 		this.fleetSpecification = fleetSpecification;
@@ -142,7 +144,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	
 	@Override
 	public void notifyStartup(StartupEvent event) {
-		originalNumberOfQsimThreads = this.scenario.getConfig().qsim().getNumberOfThreads();
 		log.info("initial number of qsim threads: " + originalNumberOfQsimThreads);
 		
 		for (DrtFareConfigGroup drtFareCfg : DrtFaresConfigGroup.get(scenario.getConfig()).getDrtFareConfigGroups()) {
@@ -184,7 +185,6 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		}
 		
 		if (teleportDrtUsers) {
-			originalNumberOfQsimThreads = this.scenario.getConfig().qsim().getNumberOfThreads();
 			this.scenario.getConfig().qsim().setNumberOfThreads(this.drtSpeedUpConfigGroup.getNumberOfThreadsForMobsimDuringSpeedUp());
 			log.info("Teleporting all drt modes. Setting number of qsim threads from previously " +
 					originalNumberOfQsimThreads + " to " +
