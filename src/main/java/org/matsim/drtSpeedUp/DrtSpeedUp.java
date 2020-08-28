@@ -185,15 +185,15 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 		}
 		
 		if (teleportDrtUsers) {
-			this.scenario.getConfig().qsim().setNumberOfThreads(this.drtSpeedUpConfigGroup.getNumberOfThreadsForMobsimDuringSpeedUp());
 			log.info("Teleporting all drt modes. Setting number of qsim threads from previously " +
-					originalNumberOfQsimThreads + " to " +
+					this.scenario.getConfig().qsim().getNumberOfThreads() + " to " +
 					this.drtSpeedUpConfigGroup.getNumberOfThreadsForMobsimDuringSpeedUp() +
 					" in iteration " +  event.getIteration());
+			this.scenario.getConfig().qsim().setNumberOfThreads(this.drtSpeedUpConfigGroup.getNumberOfThreadsForMobsimDuringSpeedUp());
 		} else {
-			this.scenario.getConfig().qsim().setNumberOfThreads(originalNumberOfQsimThreads);
 			log.info("Not teleporting drt modes. Setting number of qsim threads to original value " +
 					originalNumberOfQsimThreads + " in iteration " +  event.getIteration());
+			this.scenario.getConfig().qsim().setNumberOfThreads(originalNumberOfQsimThreads);
 		}
 	}
 	
