@@ -24,6 +24,7 @@ import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -57,18 +58,25 @@ public class MultiModeDrtSpeedUpModule extends AbstractModule {
 				
 		for (String mode : modes.split(",")) {
 			log.info("Adding scoring parameters for mode " + mode + "...");
-			
-			ModeParams originalScoringParams = config.planCalcScore().getModes().get(mode);
-			if (originalScoringParams == null) throw new RuntimeException("No scoring parameters for mode " + mode + ". Aborting...");
-			
-			ModeParams scoringParamsFakeMode = new ModeParams(mode + "_teleportation");
-			scoringParamsFakeMode.setConstant(originalScoringParams.getConstant());
-			scoringParamsFakeMode.setDailyMonetaryConstant(originalScoringParams.getDailyMonetaryConstant());
-			scoringParamsFakeMode.setDailyUtilityConstant(originalScoringParams.getDailyUtilityConstant());
-			scoringParamsFakeMode.setMarginalUtilityOfDistance(originalScoringParams.getMarginalUtilityOfDistance());
-			scoringParamsFakeMode.setMarginalUtilityOfTraveling(originalScoringParams.getMarginalUtilityOfTraveling());
-			scoringParamsFakeMode.setMonetaryDistanceRate(originalScoringParams.getMonetaryDistanceRate());
-			config.planCalcScore().getScoringParametersPerSubpopulation().values().forEach(k -> k.addModeParams(scoringParamsFakeMode));
+
+			// copy scoring parameters separately for each subpopulation if subpopulations are present
+			for (PlanCalcScoreConfigGroup.ScoringParameterSet subpopulationScoringParams: config.planCalcScore().getScoringParametersPerSubpopulation().values()) {
+				ModeParams subpopulationOriginalScoringParams = subpopulationScoringParams.getModes().get(mode);
+				if (subpopulationOriginalScoringParams == null) {
+					log.warn("No scoring parameters for mode " + mode + " in subpopulation " + subpopulationScoringParams.getName());
+					continue;
+				}
+
+				ModeParams subpopulationScoringParamsFakeMode = new ModeParams(mode + "_teleportation");
+				subpopulationScoringParamsFakeMode.setConstant(subpopulationOriginalScoringParams.getConstant());
+				subpopulationScoringParamsFakeMode.setDailyMonetaryConstant(subpopulationOriginalScoringParams.getDailyMonetaryConstant());
+				subpopulationScoringParamsFakeMode.setDailyUtilityConstant(subpopulationOriginalScoringParams.getDailyUtilityConstant());
+				subpopulationScoringParamsFakeMode.setMarginalUtilityOfDistance(subpopulationOriginalScoringParams.getMarginalUtilityOfDistance());
+				subpopulationScoringParamsFakeMode.setMarginalUtilityOfTraveling(subpopulationOriginalScoringParams.getMarginalUtilityOfTraveling());
+				subpopulationScoringParamsFakeMode.setMonetaryDistanceRate(subpopulationOriginalScoringParams.getMonetaryDistanceRate());
+
+				subpopulationScoringParams.addModeParams(subpopulationScoringParamsFakeMode);
+			}
 
 			// set speed up mode (used for drt speed up mode demand aggregation for rebalancing)
 			for (DrtConfigGroup drtConfig: multiModeDrtConfig.getModalElements()) {
