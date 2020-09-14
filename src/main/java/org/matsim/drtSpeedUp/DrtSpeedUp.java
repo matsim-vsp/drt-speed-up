@@ -430,6 +430,17 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			this.personId2personEntersVehicleTime.put(event.getPersonId(), event.getTime());
 		}	
 	}
-	
+
+	public double getCurrentBeelineFactorForDrtFare() {
+		return currentBeelineFactorForDrtFare;
+	}
+
+	public double getCurrentAvgInVehicleBeelineSpeed() {
+		return currentAvgInVehicleBeelineSpeed;
+	}
+
+	public double getCurrentAvgWaitingTime() {
+		return currentAvgWaitingTime;
+	}
 }
 
