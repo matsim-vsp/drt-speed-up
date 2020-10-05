@@ -44,10 +44,11 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Route;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
+import org.matsim.contrib.drt.fare.DrtFareParams;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEvent;
 import org.matsim.contrib.drt.passenger.events.DrtRequestSubmittedEventHandler;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.dvrp.fleet.FleetSpecification;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.events.AfterMobsimEvent;
@@ -83,22 +84,21 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	private final List<Double> waitingTimes = new ArrayList<>();
 	
 	private final Set<Id<Person>> dailyFeeCharged = new HashSet<>();
-    
+
 	private double currentBeelineFactorForDrtFare;
 	private double currentAvgWaitingTime;
 	private double currentAvgInVehicleBeelineSpeed;
-	
+
 	private final List<Tuple<Double, Double>> ridesPerVehicle2avgWaitingTime = new ArrayList<>();
 	private final List<Double> averageWaitingTimes = new ArrayList<>();
 	private final List<Double> averageBeelineFactorsForDrtFare = new ArrayList<>();
 	private final List<Double> averageInVehicleBeelineSpeeds = new ArrayList<>();
 
-	
-    private DrtFareConfigGroup drtFareCfg;
-	
+	private DrtFareParams drtFareParams;
+
 	private boolean teleportDrtUsers = false;
-    private final Map<Id<Person>, DrtRequestSubmittedEvent> lastRequestSubmission = new HashMap<>();
-    
+	private final Map<Id<Person>, DrtRequestSubmittedEvent> lastRequestSubmission = new HashMap<>();
+
 	private Scenario scenario;
 	private EventsManager events;
 	private DrtSpeedUpConfigGroup drtSpeedUpConfigGroup;
@@ -145,16 +145,11 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 	@Override
 	public void notifyStartup(StartupEvent event) {
 		log.info("initial number of qsim threads: " + originalNumberOfQsimThreads);
-		
-		for (DrtFareConfigGroup drtFareCfg : DrtFaresConfigGroup.get(scenario.getConfig()).getDrtFareConfigGroups()) {
-			if (drtFareCfg.getMode().equals(mode)) {
-				this.drtFareCfg = drtFareCfg;
-			}
+
+		for (DrtConfigGroup drtCfg : MultiModeDrtConfigGroup.get(scenario.getConfig()).getModalElements()) {
+			this.drtFareParams = drtCfg.getDrtFareParams().get();
 		}
-		if (this.drtFareCfg == null) {
-			throw new RuntimeException("Expecting a fare config group for " + mode + ". Aborting...");
-		}
-		
+
 		// set some default params to start with		
 		this.currentAvgWaitingTime = drtSpeedUpConfigGroup.getInitialWaitingTime();
 		this.currentAvgInVehicleBeelineSpeed = drtSpeedUpConfigGroup.getInitialInVehicleBeelineSpeed();
@@ -397,21 +392,23 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			
 			if (event.getLegMode().equals(mode + "_teleportation")) {
 				// compute fares and throw money events
-				
+
 				drtTeleportationTripCounter++;
-				
+
 				double fare = 0.;
 				if (!dailyFeeCharged.contains(event.getPersonId())) {
 					dailyFeeCharged.add(event.getPersonId());
-	                events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -drtFareCfg.getDailySubscriptionFee(), "drtFare", mode));
-	            }
-				fare += drtFareCfg.getBasefare();
-				fare += drtFareCfg.getDistanceFare_m() * this.currentBeelineFactorForDrtFare * beeline;
+					events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(),
+							-drtFareParams.getDailySubscriptionFee(), "drtFare", mode));
+				}
+				fare += drtFareParams.getBasefare();
+				fare += drtFareParams.getDistanceFare_m() * this.currentBeelineFactorForDrtFare * beeline;
 				double travelTime = event.getTime() - this.person2drtDepTime.get(event.getPersonId());
 				double inVehicleTime = travelTime - this.currentAvgWaitingTime;
-				fare += drtFareCfg.getTimeFare_h() * inVehicleTime / 3600.;
-				if (fare < drtFareCfg.getMinFarePerTrip()) fare = drtFareCfg.getMinFarePerTrip();
-	            events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare, "drtFare", mode));			
+				fare += drtFareParams.getTimeFare_h() * inVehicleTime / 3600.;
+				if (fare < drtFareParams.getMinFarePerTrip())
+					fare = drtFareParams.getMinFarePerTrip();
+				events.processEvent(new PersonMoneyEvent(event.getTime(), event.getPersonId(), -fare, "drtFare", mode));
 			}
 			
 			this.person2drtDepLinkId.remove(event.getPersonId());

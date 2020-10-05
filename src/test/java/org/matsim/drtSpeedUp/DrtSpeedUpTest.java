@@ -9,8 +9,6 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareModule;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigs;
@@ -51,7 +49,8 @@ public class DrtSpeedUpTest {
 
 	@Test
 	public final void testQsimThreads() {
-		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtFaresConfigGroup(), new DrtSpeedUpConfigGroup());
+		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(),
+				new DvrpConfigGroup(), new DrtSpeedUpConfigGroup());
 		// remove demand to speed up this test
 		config.plans().setInputFile(null);
 		config.controler().setRunId("test2");
@@ -74,7 +73,6 @@ public class DrtSpeedUpTest {
 		controler.addOverridingModule(new MultiModeDrtModule());
 		controler.addOverridingModule(new DvrpModule());
 		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));
-		controler.addOverridingModule(new DrtFareModule());
 
 		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
 

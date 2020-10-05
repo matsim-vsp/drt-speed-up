@@ -9,8 +9,6 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.matsim.analysis.ScoreStatsControlerListener.ScoreItem;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareModule;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigs;
@@ -46,13 +44,15 @@ public class RunDrtSpeedUpTest {
 	
 	@Test
 	public final void test2() {
-		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtFaresConfigGroup(), new DrtSpeedUpConfigGroup());
+		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(),
+				new DvrpConfigGroup(), new DrtSpeedUpConfigGroup());
 		config.controler().setRunId("test2");
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		
-		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
+
+		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(),
+				config.plansCalcRoute());
 		MultiModeDrtSpeedUpModule.addTeleportedDrtMode(config);
-		
+
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
 		routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
@@ -61,8 +61,7 @@ public class RunDrtSpeedUpTest {
 		controler.addOverridingModule(new MultiModeDrtModule());
 		controler.addOverridingModule(new DvrpModule());
 		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));				
-		controler.addOverridingModule(new DrtFareModule());
-		
+
 		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
 		
 		controler.run();
@@ -74,15 +73,17 @@ public class RunDrtSpeedUpTest {
 	
 	@Test
 	public final void test3withUpdateDuringSpeedUp() throws MalformedURLException {
-		Config config = ConfigUtils.loadConfig("test/input/equil-with-mode-shift/config-with-drt.xml", new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtFaresConfigGroup(), new DrtSpeedUpConfigGroup());
+		Config config = ConfigUtils.loadConfig("test/input/equil-with-mode-shift/config-with-drt.xml",
+				new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtSpeedUpConfigGroup());
 		config.controler().setRunId("test3");
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		
+
 		ModeParams params = new ModeParams("car");
 		params.setConstant(-300.);
 		config.planCalcScore().addModeParams(params);
-				
-		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
+
+		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(),
+				config.plansCalcRoute());
 		MultiModeDrtSpeedUpModule.addTeleportedDrtMode(config);
 		
 		DrtSpeedUpConfigGroup speedUpCfg = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class);
@@ -96,9 +97,8 @@ public class RunDrtSpeedUpTest {
 		Controler controler = new Controler(scenario);		
 		controler.addOverridingModule(new MultiModeDrtModule());
 		controler.addOverridingModule(new DvrpModule());
-		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));				
-		controler.addOverridingModule(new DrtFareModule());
-		
+		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));
+
 		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
 		
 		controler.run();
@@ -121,16 +121,18 @@ public class RunDrtSpeedUpTest {
 	
 	@Test
 	public final void test4withMovingAverage() {
-		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(), new DvrpConfigGroup(), new DrtFaresConfigGroup(), new DrtSpeedUpConfigGroup());
+		Config config = ConfigUtils.loadConfig("scenarios/equil/config-with-drt.xml", new MultiModeDrtConfigGroup(),
+				new DvrpConfigGroup(), new DrtSpeedUpConfigGroup());
 		config.controler().setRunId("test2");
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		
-		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(), config.plansCalcRoute());
+
+		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.planCalcScore(),
+				config.plansCalcRoute());
 		MultiModeDrtSpeedUpModule.addTeleportedDrtMode(config);
-		
+
 		DrtSpeedUpConfigGroup speedUpCfg = ConfigUtils.addOrGetModule(config, DrtSpeedUpConfigGroup.class);
 		speedUpCfg.setMovingAverageSize(2);
-		
+
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
 		routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
@@ -138,9 +140,8 @@ public class RunDrtSpeedUpTest {
 		Controler controler = new Controler(scenario);		
 		controler.addOverridingModule(new MultiModeDrtModule());
 		controler.addOverridingModule(new DvrpModule());
-		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));				
-		controler.addOverridingModule(new DrtFareModule());
-		
+		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));
+
 		controler.addOverridingModule(new MultiModeDrtSpeedUpModule());
 		
 		controler.run();
