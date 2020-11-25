@@ -72,7 +72,7 @@ import org.matsim.drtSpeedUp.DrtSpeedUpConfigGroup.WaitingTimeUpdateDuringSpeedU
 * @author ikaddoura
 */
 
-final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehicleEventHandler, PersonArrivalEventHandler, StartupListener, BeforeMobsimListener, AfterMobsimListener, IterationStartsListener, IterationEndsListener, DrtRequestSubmittedEventHandler {
+public final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehicleEventHandler, PersonArrivalEventHandler, StartupListener, BeforeMobsimListener, AfterMobsimListener, IterationStartsListener, IterationEndsListener, DrtRequestSubmittedEventHandler {
 	private static final Logger log = Logger.getLogger(DrtSpeedUp.class);
 		
 	private final Map<Id<Person>, Double> person2drtDepTime = new HashMap<>();
@@ -438,6 +438,15 @@ final class DrtSpeedUp implements PersonDepartureEventHandler, PersonEntersVehic
 			this.personId2personEntersVehicleTime.put(event.getPersonId(), event.getTime());
 		}	
 	}
-	
+
+	public double getCurrentBeelineFactorForDrtFare() {
+		return this.currentBeelineFactorForDrtFare;
+	}
+	public double getCurrentAvgInVehicleBeelineSpeed() {
+		return this.currentAvgInVehicleBeelineSpeed;
+	}
+	public double getCurrentAvgWaitingTime() {
+		return this.currentAvgWaitingTime;
+	}
 }
 
